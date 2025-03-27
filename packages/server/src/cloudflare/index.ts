@@ -51,10 +51,6 @@ class DurableMcp extends DurableObject {
   resources: Record<string, Resource<any>> = {};
   name: string = "";
 
-  constructor(ctx: DurableObjectState, env: any) {
-    super(ctx, env);
-  }
-
   handleRpc(request: Request, version: string) {
     return handleRpc(this, version, request);
   }
@@ -64,7 +60,7 @@ export const createDurableMcp = (opts: DurableMcpOptions) => {
   return class extends DurableMcp {
     name = opts.name;
 
-    constructor(ctx: DurableObjectState, env: any) {
+    constructor(public ctx: DurableObjectState, public env: any) {
       super(ctx, env);
     }
   };

@@ -1,8 +1,21 @@
 {
-  "name": "@mocorp/cloudflare",
+  "name": "@mcplug/server",
+  "private": false,
+  "version": "1.0.0",
+  "description": "Server for mcplug",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "author": "mcplug",
+  "homepage": "https://github.com/mcplug/sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcplug/sdk.git"
+  },
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify"
+    "deploy": "wrangler deploy --minify",
+    "build": "tsup"
   },
   "dependencies": {
     "@types/mime-types": "^2.1.4",
@@ -16,6 +29,33 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
+    "tsup": "^8.4.0",
     "wrangler": "^3.109.2"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    },
+    "./cloudflare": {
+      "types": "./dist/cloudflare/index.d.ts",
+      "require": "./dist/cloudflare/index.js",
+      "import": "./dist/cloudflare/index.js"
+    }
+  },
+  "typeVersion": {
+    "*": {
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "./cloudflare": [
+        "./dist/cloudflare/index.d.ts"
+      ]
+    }
   }
 }

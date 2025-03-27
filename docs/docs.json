@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "maple",
   "name": "mcplug",
   "colors": {
     "primary": "#000000",
@@ -15,18 +15,19 @@
         "groups": [
           {
             "group": "Get Started",
-            "pages": ["introduction", "quickstart", "development"]
+            "pages": ["introduction", "prerequisites"]
           },
           {
-            "group": "Essentials",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
-            ]
+            "group": "Concepts",
+            "pages": ["concepts/prompt", "concepts/tool", "concepts/resource"]
+          },
+          {
+            "group": "Cloudflare",
+            "pages": ["cloudflare/introduction", "cloudflare/worker", "cloudflare/durableObject"]
+          },
+          {
+            "group": "Publishing",
+            "pages": ["publishing/introduction", "publishing/get-paid"]
           }
         ]
       },

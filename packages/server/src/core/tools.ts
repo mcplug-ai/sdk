@@ -1,59 +1,55 @@
-import { z } from "zod";
+import { JsonSchema } from "arktype";
 import { Ctx, MaybePromise, OmitNever, WithCtx } from "../types";
 import { StandardSchemaV1, validateInput } from "../types/standardSchema";
 import { toJsonSchema } from "../utils/toJsonSchema";
 import { safeStringify } from "../utils/utils";
-import { AudioContent, CallToolResult, ImageContent, TextContent } from "./mcp/spec";
+import { AudioContent, ImageContent, TextContent, Tool as SpecTool } from "./mcp/spec";
 import { AudioMimeType, ImageMimeType, MimeType } from "./mime";
 import { toDataUrl } from "./resources";
 
-export type ToolPayload<Schema extends StandardSchemaV1 | undefined, Params extends string[] | undefined> = OmitNever<{
+export type ToolPayload<Schema extends StandardSchemaV1 | undefined> = OmitNever<{
   input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : never;
   sessionId: string;
-  userId: string;
+  userId: string | null;
   error: typeof error;
   blob: typeof blob;
-  params: Params extends string[]
-    ? {
-        [K in Params[number]]: string;
-      }
-    : never;
 }>;
 
-export type HandleToolFunction<Schema extends StandardSchemaV1 | undefined, Params extends string[] | undefined> = (
-  payload: ToolPayload<Schema, Params>
+export type HandleToolFunction<Schema extends StandardSchemaV1 | undefined> = (
+  payload: ToolPayload<Schema>
 ) => MaybePromise<any>;
 
 export class Tool<
   Schema extends StandardSchemaV1 | undefined = StandardSchemaV1 | undefined,
-  H extends HandleToolFunction<Schema, Params> = any,
-  Params extends string[] | undefined = string[] | undefined
+  H extends HandleToolFunction<Schema> = any
 > {
   "~schema": Schema;
   "~description": string;
-  "~cost"?: number;
+  "~output"?: StandardSchemaV1;
   "~handler": H;
-  "~params": Params;
+
   constructor(description: string) {
     this["~description"] = description;
   }
 
-  "~call" = (
+  "~call" = async (
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
-    params: Params extends string[] ? { [K in Params[number]]: string } : undefined,
     sessionId: string,
     userId: string,
     ctx?: Ctx
   ) => {
-    const result = this["~handler"]({
+    const result = await this["~handler"]({
       input,
-      params: params as any,
       sessionId,
       userId,
       error,
       blob,
       ctx
-    } as ToolPayload<Schema, Params>);
+    } as ToolPayload<Schema>);
+
+    if (result instanceof ToolError) {
+      return result.result;
+    }
 
     if (result instanceof BlobResult) {
       return result.result;
@@ -64,6 +60,7 @@ export class Tool<
         text: result
       } satisfies TextContent;
     }
+
     return {
       type: "text",
       text: safeStringify(result)
@@ -79,56 +76,75 @@ export class Tool<
 
   input = <SS extends StandardSchemaV1>(standardStandardSchemaV1: SS) => {
     this["~schema"] = standardStandardSchemaV1 as unknown as Schema;
-    return this as unknown as Tool<SS, HandleToolFunction<SS, Params>, Params>;
+    return this as unknown as Tool<SS, HandleToolFunction<SS>>;
   };
 
-  cost = (cost: number) => {
-    this["~cost"] = cost;
-    return this;
+  output = (schema: StandardSchemaV1) => {
+    this["~output"] = schema;
+    return this as Tool<Schema, H>;
   };
 
-  params = <PP extends string[]>(...params: PP) => {
-    this["~params"] = params as unknown as Params;
-    return this as unknown as Tool<Schema, HandleToolFunction<Schema, PP>, PP>;
-  };
-
-  handle = <HH extends HandleToolFunction<Schema, Params>>(handler: HH) => {
+  handle = <HH extends HandleToolFunction<Schema>>(handler: HH) => {
     this["~handler"] = handler as unknown as H;
-    return this as unknown as Tool<Schema, HH, Params>;
+    return this as unknown as Tool<Schema, HH>;
   };
 }
 
 export const tool = (description: string) => new Tool(description);
 
-export const defineTools = (tools: Record<string, Tool<any, any, any>>, addCost: boolean = true) => {
+export const defineTools = <O extends true | undefined>(tools: Record<string, Tool<any, any>>, withOutput: O) => {
   return Object.entries(tools).map(([key, tool]) => {
-    return defineTool(key, tool, addCost);
+    return defineTool<O>(key, tool, withOutput);
   });
 };
 
-export const defineTool = (name: string, tool: Tool<any, any, any>, addCost: boolean = true) => {
+export const defineTool = <O extends true | undefined>(
+  name: string,
+  tool: Tool<any, any>,
+  withOutput?: O
+): O extends true ? SpecTool & { outputSchema: JsonSchema.Object } : SpecTool => {
   const definition = {
     name,
     description: tool["~description"],
-    params: tool["~params"],
-    inputSchema: toJsonSchema(tool["~schema"])
-  };
-  if (addCost) {
-    Object.assign(definition, { cost: tool["~cost"] });
+    inputSchema: tool["~schema"]
+      ? toJsonSchema(tool["~schema"])
+      : ({
+          type: "object"
+        } as JsonSchema.Object)
+  } as SpecTool;
+
+  if (withOutput === true) {
+    Object.assign(definition, {
+      outputSchema: tool["~output"]
+        ? toJsonSchema(tool["~output"])
+        : ({
+            type: "object"
+          } as JsonSchema.Object)
+    });
+    return definition as SpecTool & { outputSchema: JsonSchema.Object };
+  } else {
+    // @ts-ignore
+    return definition as SpecTool;
   }
-  return definition;
 };
 
+class ToolError {
+  constructor(private message?: string) {}
+  get result() {
+    return {
+      content: [
+        {
+          type: "text",
+          text: this.message || "An error occurred during tool execution"
+        }
+      ],
+      isError: true
+    };
+  }
+}
+
 const error = (message?: string) => {
-  return {
-    content: [
-      {
-        type: "text",
-        text: message || "An error occurred during tool execution"
-      }
-    ],
-    isError: true
-  };
+  return new ToolError(message);
 };
 
 class BlobResult {

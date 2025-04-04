@@ -1,6 +1,5 @@
 import { Ctx, MaybePromise, WithCtx } from "../types";
-import { lookup } from "mrmime";
-import { MimeType } from "./mime";
+import { MimeType, validateMimeType } from "./mime";
 import { MCPError, mcpError } from "./mcp/errors";
 export type ResourcePayload = WithCtx<{
   uri: string;
@@ -62,7 +61,8 @@ export class Resource<H extends HandleResourceFunction> {
   };
 
   type = (type: MimeType) => {
-    const mime = lookup(type);
+    const mime = validateMimeType(type);
+
     if (!mime) {
       throw new Error(`Invalid mime type: ${type}`);
     }

@@ -1,7 +1,7 @@
 {
   "name": "@mcplug/server",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Server for mcplug",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "build": "tsup"
+    "build": "tsup",
+    "build-dev": "tsup --watch"
   },
   "dependencies": {
     "@types/mime-types": "^2.1.4",
@@ -44,8 +45,13 @@
     },
     "./cloudflare": {
       "types": "./dist/cloudflare/index.d.ts",
-      "require": "./dist/cloudflare/index.js",
-      "import": "./dist/cloudflare/index.js"
+      "require": "./dist/cloudflare/index.mjs",
+      "import": "./dist/cloudflare/index.mjs"
+    },
+    "./hono": {
+      "types": "./dist/hono/index.d.ts",
+      "require": "./dist/hono/index.mjs",
+      "import": "./dist/hono/index.mjs"
     }
   },
   "typeVersion": {
@@ -55,6 +61,9 @@
       ],
       "./cloudflare": [
         "./dist/cloudflare/index.d.ts"
+      ],
+      "./hono": [
+        "./dist/hono/index.d.ts"
       ]
     }
   }

@@ -6,8 +6,8 @@
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "exactOptionalPropertyTypes": false,
-    "lib": ["ESNext"],
-    "types": ["@cloudflare/workers-types/2023-07-01"]
+    "exactOptionalPropertyTypes": true,
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"]
   }
 }

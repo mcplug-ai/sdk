@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/cloudflare/index.ts", "src/hono/index.ts"],
+  entry: ["src/index.ts"],
   splitting: true,
   skipNodeModulesBundle: true,
   dts: true,

@@ -26,7 +26,7 @@ const defaultErrorMessages: Record<MCPErrorCode, string> = {
   RESOURCE_NOT_FOUND: "Resource not found",
   INVALID_REQUEST: "Invalid request",
   METHOD_NOT_FOUND: "Method not found",
-  INVALID_PARAMS: "Invalid params",
+  INVALID_PARAMS: "Invalid parameters",
   INTERNAL_ERROR: "Internal error"
 };
 

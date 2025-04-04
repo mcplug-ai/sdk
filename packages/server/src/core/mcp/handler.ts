@@ -26,8 +26,16 @@ import {
   ListToolsRequest,
   SubscribeRequest,
   UnsubscribeRequest,
-  RequestId
+  RequestId,
+  PaginatedResult,
+  Tool as SpecTool
 } from "./spec";
+
+export interface ListToolsOutputResult extends PaginatedResult {
+  tools: (SpecTool & {
+    outputSchema: SpecTool["inputSchema"];
+  })[];
+}
 
 type MCPHandler = {
   initialize: (payload: InitializeRequest["params"]) => MaybePromise<InitializeResult | MCPError>;
@@ -50,6 +58,7 @@ type MCPHandler = {
   tools: {
     call: (payload: CallToolRequest["params"]) => MaybePromise<CallToolResult | MCPError>;
     list: (payload: ListToolsRequest["params"]) => MaybePromise<ListToolsResult | MCPError>;
+    io: (payload: ListToolsRequest["params"]) => MaybePromise<ListToolsResult | MCPError>;
   };
   ping?: (payload: PingRequest) => MaybePromise<EmptyResult | MCPError>;
 };
@@ -57,13 +66,13 @@ type MCPHandler = {
 type RPCRequest = ClientRequest & { id: RequestId };
 
 export type Version<
-  T extends Record<string, Tool<any, any, any>>,
+  T extends Record<string, Tool<any, any>>,
   R extends Record<string, Resource<any>>,
   P extends Record<string, Prompt<any, any>>
 > = {
-  name: string;
+  name?: string;
   tools: {
-    [K in keyof T]: T[K] extends Tool<infer S, infer H, infer P> ? T[K] : never;
+    [K in keyof T]: T[K] extends Tool<infer S, infer H> ? T[K] : never;
   };
   resources?: {
     [K in keyof R]: R[K] extends Resource<infer S> ? R[K] : never;
@@ -99,7 +108,6 @@ export const handleRpc = async (
   const sessionId = request.headers.get("Mcp-Session-Id") || crypto.randomUUID();
   const userId = request.headers.get("Mcp-User-Id") || crypto.randomUUID();
   const body = (await request.json()) as RPCRequest | RPCRequest[];
-  console.log(body);
   const isBatchRequest = isBatch(body);
   let requests = isBatchRequest ? body : ([body] as RPCRequest[]);
   const { prompts, resources, tools } = version;
@@ -111,10 +119,10 @@ export const handleRpc = async (
     initialize: async (payload) => {
       const result: InitializeResult = {
         serverInfo: {
-          name: version.name,
+          name: version.name || versionNumber,
           version: versionNumber
         },
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-03-26",
         capabilities: {}
       };
 
@@ -139,6 +147,7 @@ export const handleRpc = async (
     },
     prompts: {
       get: async (payload) => {
+        console.log(payload);
         if (!hasPrompts) {
           return mcpError("METHOD_NOT_FOUND");
         }
@@ -246,6 +255,10 @@ export const handleRpc = async (
           return result;
         }
 
+        if (result.isError) {
+          return result;
+        }
+
         return {
           content: [result]
         } satisfies CallToolResult;
@@ -255,8 +268,17 @@ export const handleRpc = async (
           return mcpError("METHOD_NOT_FOUND");
         }
         return {
-          tools: defineTools(tools)
+          tools: defineTools(tools, undefined)
         } satisfies ListToolsResult;
+      },
+      io: async (payload) => {
+        if (!hasTools) {
+          return mcpError("METHOD_NOT_FOUND");
+        }
+        const toolsResult = defineTools(tools, true);
+        return {
+          tools: toolsResult
+        } satisfies ListToolsOutputResult;
       }
     },
     ping: async (payload) => {
@@ -272,24 +294,37 @@ export const handleRpc = async (
         if (key in handler) {
           handler = handler[key];
         } else {
-          return mcpError("METHOD_NOT_FOUND");
+          const error = mcpError("METHOD_NOT_FOUND");
+          return {
+            jsonrpc: "2.0",
+            id,
+            error: {
+              code: error["~code"],
+              message: error["~message"],
+              data: error["~data"]
+            }
+          };
         }
       }
 
       const result = await handler(params, ctx);
 
-      if ("error" in result) {
-        return JSON.stringify({
+      if (result instanceof MCPError) {
+        return {
           jsonrpc: "2.0",
           id,
-          error: result.error
-        });
+          error: {
+            code: result["~code"],
+            message: result["~message"],
+            data: result["~data"]
+          }
+        };
       } else {
-        return JSON.stringify({
+        return {
           jsonrpc: "2.0",
           id,
           result
-        });
+        };
       }
     })
   );
@@ -301,7 +336,7 @@ export const handleRpc = async (
   });
 };
 
-export const authorize = (request: Request, secret: string) => {
+export const authorize = (request: Pick<Request, "headers">, secret: string) => {
   if (!secret) {
     return new Response("Unauthorized", { status: 401 });
   }

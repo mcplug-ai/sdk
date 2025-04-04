@@ -1,4 +1,4 @@
-import { authorize, getVersionNumber, handleRpc, Server, Version } from "../core/mcp/handler";
+import { authorize, getVersionNumber, handleRpc, Version } from "../core/mcp/handler";
 import { DurableObject } from "cloudflare:workers";
 import { Tool } from "../core/tools";
 import { Prompt } from "../core/prompts";
@@ -46,7 +46,7 @@ export const createHandler = (server: CfServer) => {
 };
 
 class DurableMcp extends DurableObject {
-  tools: Record<string, Tool<any, any, any>> = {};
+  tools: Record<string, Tool<any, any>> = {};
   prompts: Record<string, Prompt<any, any>> = {};
   resources: Record<string, Resource<any>> = {};
   name: string = "";

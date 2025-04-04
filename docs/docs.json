@@ -19,11 +19,15 @@
           },
           {
             "group": "Concepts",
-            "pages": ["concepts/prompt", "concepts/tool", "concepts/resource"]
+            "pages": ["concepts/tool", "concepts/constants", "concepts/prompt", "concepts/resource"]
           },
           {
             "group": "Cloudflare",
-            "pages": ["cloudflare/introduction", "cloudflare/worker", "cloudflare/durableObject"]
+            "pages": ["cloudflare/worker", "cloudflare/durableObject"]
+          },
+          {
+            "group": "Hono",
+            "pages": ["hono/quickstart"]
           },
           {
             "group": "Publishing",

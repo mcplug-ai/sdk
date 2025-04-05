@@ -1,0 +1,56 @@
+---
+title: "Constants"
+description: "Using constants or secrets in your mcp server"
+icon: "key"
+---
+
+When depoloying your mcp server, you may need the developper who is using your mcp server to give you some constants or secrets. It can be API_KEY for your service or authentication tokens.
+
+This constants are not something the LLM will be able to access or use in the prompt. It is the responsibility of the developer to give you the constants.
+
+For example if I develop a mcp server that is a weather service, the developer will need to give me the API_KEY for the weather service and the LLM will need need to give me the city name.
+
+## Define a constant
+
+To define a constant that your tool will access, you have to prefixed a property with an underscore `_` in your input schema.
+
+```ts
+import { tool } from "@mcplug/server";
+
+export const myTool = tool(
+  "This is the description of the tool. It is highly recommended to provide a detailed description of the tool."
+).input(
+  z
+    .object({
+      _WEATHER_API_KEY: z.string().describe("The API key for the weather service"),
+      city: z.string().describe("The city name")
+    })
+    .handle(async ({ input }) => {
+      const { _WEATHER_API_KEY, city } = input;
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${_WEATHER_API_KEY}`
+      );
+      const data = await response.json();
+      return data;
+    })
+);
+```
+
+In this example, the `_WEATHER_API_KEY` is a constant that will be provided by the developer and the `city` is the city name that the LLM will provide.
+
+## How constants are passed to the tool
+
+To use a constant in your tool, you can destructure the constant from the input object.
+
+```ts
+import { mcplug } from "@mcplug/client";
+
+const tools = await mcplug(MCPLUG_TOKEN, {
+  id: "plug_id",
+  constants: {
+    _WEATHER_API_KEY: "1234567890"
+  }
+});
+// ... rest of the code
+```

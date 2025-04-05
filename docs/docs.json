@@ -12,10 +12,12 @@
     "tabs": [
       {
         "tab": "Server",
+        "icon": "book",
+
         "groups": [
           {
             "group": "Get Started",
-            "pages": ["introduction", "prerequisites"]
+            "pages": ["get-started/overview", "get-started/quick-start"]
           },
           {
             "group": "Concepts",
@@ -26,8 +28,8 @@
             "pages": ["cloudflare/worker", "cloudflare/durableObject"]
           },
           {
-            "group": "Hono",
-            "pages": ["hono/quickstart"]
+            "group": "Other platforms",
+            "pages": ["hono/introduction"]
           },
           {
             "group": "Publishing",

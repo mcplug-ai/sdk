@@ -1,88 +1,80 @@
 ---
-title: "Tool"
-description: "Introduction to tools in mcplug"
-icon: "text-size"
+title: "Tools"
+description: "Enable LLMs to perform actions through your server"
+icon: "screwdriver-wrench"
 ---
 
-## Titles
+As per the MCP specification:
 
-Best used for section headers.
+<Info>
 
-```md
-## Titles
+Enable LLMs to perform actions through your server
+
+Tools are a powerful primitive in the Model Context Protocol (MCP) that enable servers to expose executable functionality to clients. Through tools, LLMs can interact with external systems, perform computations, and take actions in the real world.
+
+</Info>
+
+<Card horizontal title="Learn more about tools" href="https://modelcontextprotocol.io/docs/concepts/tools" icon="link">
+  <p>MCP Documentation</p>
+</Card>
+
+# Define a tool
+
+```ts
+import { tool } from "@mcplug/server";
+
+export const myTool = tool(
+  "This is the description of the tool. It is highly recommended to provide a detailed description of the tool. In order for the llm to understand how and when to use the tool."
+)
+  .input(
+    z.object({
+      name: z.string().describe("The name of the person"),
+      age: z.number().describe("The age of the person")
+    })
+  )
+  .output(
+    z.object({
+      name: z.string().describe("The name of the person"),
+      age: z.number().describe("The age of the person")
+    })
+  )
+  .handle(async ({ input, userId, sessionId, error }) => {
+    try {
+      const result = await fetch("https://api.example.com/data", {
+        method: "POST",
+        body: JSON.stringify({ input, userId, sessionId })
+      });
+
+      return {
+        name: result.name,
+        age: result.age
+      };
+    } catch (error) {
+      // You can return an error to the llm to handle it. This will built a standard RPC error.
+      return error("An error occurred while executing the tool.");
+    }
+  });
 ```
 
-### Subtitles
+## Input and output schema
 
-Best use to subsection headers.
+You can define an input and output schema for your tool using `zod`, `valibot` or `arktype`.
 
-```md
-### Subtitles
-```
+Output schema is not mandatory but highly recommended. It will be used to generate the types for the tool in order to provide a better developer experience when using your mcp server.
 
-<Tip>
+## Handle
 
-Each **title** and **subtitle** creates an anchor and also shows up on the table of contents on the right.
+The `handle` function is the main function of the tool. It is the function that will be called when the tool is executed.
 
-</Tip>
+It will receive the input, an error function, the userId and the sessionId as arguments.
 
-## Text Formatting
+You can return an error to the llm to handle it. This will built a standard RPC error.
 
-We support most markdown formatting. Simply add `**`, `_`, or `~` around text to format it.
+SessionId is the id of the session that is currently being executed. It can be used to identify the session and to store data associated with it.
 
-| Style         | How to write it   | Result          |
-| ------------- | ----------------- | --------------- |
-| Bold          | `**bold**`        | **bold**        |
-| Italic        | `_italic_`        | _italic_        |
-| Strikethrough | `~strikethrough~` | ~strikethrough~ |
+UserId is the id of the user that is currently executing the tool, it is not mandatory to provide it. But can give you more context about the user.
 
-You can combine these. For example, write `**_bold and italic_**` to get **_bold and italic_** text.
+<Note>
+The handle function can return either a string or an object. You DO NOT NEED to return an object that follows the mcp specification. This is handled under the hood by the SDK.
 
-You need to use HTML to write superscript and subscript text. That is, add `<sup>` or `<sub>` around your text.
-
-| Text Size   | How to write it          | Result                 |
-| ----------- | ------------------------ | ---------------------- |
-| Superscript | `<sup>superscript</sup>` | <sup>superscript</sup> |
-| Subscript   | `<sub>subscript</sub>`   | <sub>subscript</sub>   |
-
-## Linking to Pages
-
-You can add a link by wrapping text in `[]()`. You would write `[link to google](https://google.com)` to [link to google](https://google.com).
-
-Links to pages in your docs need to be root-relative. Basically, you should include the entire folder path. For example, `[link to text](/writing-content/text)` links to the page "Text" in our components section.
-
-Relative links like `[link to text](../text)` will open slower because we cannot optimize them as easily.
-
-## Blockquotes
-
-### Singleline
-
-To create a blockquote, add a `>` in front of a paragraph.
-
-> Dorothy followed her through many of the beautiful rooms in her castle.
-
-```md
-> Dorothy followed her through many of the beautiful rooms in her castle.
-```
-
-### Multiline
-
-> Dorothy followed her through many of the beautiful rooms in her castle.
->
-> The Witch bade her clean the pots and kettles and sweep the floor and keep the fire fed with wood.
-
-```md
-> Dorothy followed her through many of the beautiful rooms in her castle.
->
-> The Witch bade her clean the pots and kettles and sweep the floor and keep the fire fed with wood.
-```
-
-### LaTeX
-
-Mintlify supports [LaTeX](https://www.latex-project.org) through the Latex component.
-
-<Latex>8 x (vk x H1 - H2) = (0,1)</Latex>
-
-```md
-<Latex>8 x (vk x H1 - H2) = (0,1)</Latex>
-```
+</Note>

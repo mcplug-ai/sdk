@@ -1,0 +1,63 @@
+---
+title: Introduction
+description: "Welcome to the home of your new documentation"
+---
+
+## What is Mcplug?
+
+Mcplug is a an open registry of mcp servers that simplifies their discovery and use inside the code of your application.
+
+We provide a server sdk that streamlines the process of creating and versionning a MCP server.
+
+The sdk is using the latest [Streamable HTTP specification of 20025-03-06](https://spec.modelcontextprotocol.io/specification/2025-03-26/).
+
+Although the sdk is made for developers to publish their own MCP servers on Mcplug.ai it can be used to deploy standards MCP servers elsewhere.
+
+## Simple example
+
+Here is a simple example of how to use the mcplug sdk to create a MCP server on cloudflare workers.
+
+```ts
+import { z } from "zod";
+import { tool, createHandler } from "@mcplug/server/cloudflare";
+import { env } from "cloudflare:workers";
+
+export default createHandler({
+  secret: env.MCP_SECRET,
+  versions: {
+    "1.0.0": {
+      name: "Weather_Mcp",
+      tools: {
+        "get-weather": tool("Use this tool to get the weather in a given city")
+          .input(
+            z.object({
+              city: z.string()
+            })
+          )
+          .handle(async ({ input }) => {
+            return {
+              city: input.city,
+              temp: 20,
+              unit: "C",
+              condition: "sunny"
+            };
+          })
+      }
+    }
+  }
+});
+```
+
+At is core a server is just an object of versions.
+
+Each version has a name and records of tools / prompts / ressources.
+
+<Card icon="screwdriver-wrench" horizontal title="Tools" href="/concepts/tools">
+  Learn more about tools
+</Card>
+<Card icon="thought-bubble" horizontal title="Prompts" href="/concepts/prompts">
+  Learn more about prompts
+</Card>
+<Card icon="files" horizontal title="Ressources" href="/concepts/ressources">
+  Learn more about ressources
+</Card>

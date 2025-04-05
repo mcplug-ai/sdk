@@ -13,9 +13,10 @@
 
 import { z } from 'zod';
 import { tool, createHandler } from '@mcplug/server/cloudflare';
+import { env } from 'cloudflare:workers';
 
 export default createHandler({
-	secret: 'secret',
+	secret: env.MCP_SECRET,
 	versions: {
 		'1.0.0': {
 			name: 'Weather_Mcp',
@@ -24,7 +25,6 @@ export default createHandler({
 					.input(
 						z.object({
 							city: z.string(),
-							_GOOGLE_API_KEY: z.string(),
 						})
 					)
 					.handle(async ({ input }) => {

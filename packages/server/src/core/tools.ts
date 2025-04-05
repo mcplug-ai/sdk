@@ -38,33 +38,41 @@ export class Tool<
     userId: string,
     ctx?: Ctx
   ) => {
-    const result = await this["~handler"]({
-      input,
-      sessionId,
-      userId,
-      error,
-      blob,
-      ctx
-    } as ToolPayload<Schema>);
+    try {
+      const result = await this["~handler"]({
+        input,
+        sessionId,
+        userId,
+        error,
+        blob,
+        ctx
+      } as ToolPayload<Schema>);
 
-    if (result instanceof ToolError) {
-      return result.result;
-    }
+      if (result instanceof ToolError) {
+        return result.result;
+      }
 
-    if (result instanceof BlobResult) {
-      return result.result;
-    }
-    if (typeof result === "string") {
+      if (result instanceof BlobResult) {
+        return result.result;
+      }
+
+      if (typeof result === "string") {
+        return {
+          type: "text",
+          text: result
+        } satisfies TextContent;
+      }
+
       return {
         type: "text",
-        text: result
+        text: safeStringify(result)
       } satisfies TextContent;
+    } catch (err) {
+      if (err instanceof ToolError) {
+        return err;
+      }
+      return new ToolError(err instanceof Error ? err.message || "Unknown error" : "Unknown error");
     }
-
-    return {
-      type: "text",
-      text: safeStringify(result)
-    } satisfies TextContent;
   };
 
   "~validate" = async (input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined) => {

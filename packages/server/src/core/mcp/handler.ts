@@ -289,6 +289,7 @@ export const handleRpc = async (
   const results = await Promise.all(
     requests.map(async (request) => {
       const { method, params, id } = request;
+
       let handler = mpcHandler as any;
       for (const key of method.split("/")) {
         if (key in handler) {
@@ -307,27 +308,40 @@ export const handleRpc = async (
         }
       }
 
-      const result = await handler(params, ctx);
+      try {
+        const result = await handler(params, ctx);
 
-      if (result instanceof MCPError) {
+        if (result instanceof MCPError) {
+          return {
+            jsonrpc: "2.0",
+            id,
+            error: {
+              code: result["~code"],
+              message: result["~message"],
+              data: result["~data"]
+            }
+          };
+        } else {
+          return {
+            jsonrpc: "2.0",
+            id,
+            result
+          };
+        }
+      } catch (error) {
         return {
           jsonrpc: "2.0",
           id,
           error: {
-            code: result["~code"],
-            message: result["~message"],
-            data: result["~data"]
+            code: -32603,
+            message: "Internal server error",
+            data: null
           }
-        };
-      } else {
-        return {
-          jsonrpc: "2.0",
-          id,
-          result
         };
       }
     })
   );
+
   return new Response(JSON.stringify(isBatchRequest ? results : results[0]), {
     headers: {
       "Content-Type": "application/json",

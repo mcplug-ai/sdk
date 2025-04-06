@@ -1,0 +1,25 @@
+---
+title: "Vercel AI SDK"
+description: "Using the Vercel AI SDK to create a MCP server"
+icon: "cloud"
+---
+
+MCPlug only works with Vercel AI SDK for now. So you need to use the Vercel AI SDK to use the tools.
+
+<Card horizontal icon="cloud" title="Vercel AI SDK" href="https://sdk.vercel.ai/docs">
+  <p>Visit the Vercel AI SDK documentation to learn more.</p>
+</Card>
+
+The integration is very straightforward. Just use the ai sdk as usual but pass the tools of mcplug to it.
+
+```ts
+import { generateText, tool } from "ai";
+import { mcplug } from "@mcplug/client";
+
+const result = await generateText({
+  model: yourModel,
+  //   this single line is enough to give your llm access to the tools of mcplug
+  tools: await mcplug(PLUG_TOKEN),
+  prompt: "What is the weather in San Francisco?"
+});
+```

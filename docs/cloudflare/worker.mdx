@@ -4,34 +4,58 @@ description: "Deploying a MCPlug server with a simple Cloudflare Workers"
 icon: "code"
 ---
 
-## Basic
+To get started with MCPlug, you can use the `mcplug init` command to create a new project and choose the Cloudflare Worker template.
 
-### Inline Code
-
-To denote a `word` or `phrase` as code, enclose it in backticks (`).
-
-```
-To denote a `word` or `phrase` as code, enclose it in backticks (`).
+```bash
+npx mcplug init <project-name>
 ```
 
-### Code Block
+This command will create a new project with the Cloudflare Worker template and install the necessary dependencies.
 
-Use [fenced code blocks](https://www.markdownguide.org/extended-syntax/#fenced-code-blocks) by enclosing code in three backticks and follow the leading ticks with the programming language of your snippet to get syntax highlighting. Optionally, you can also write the name of your code after the programming language.
+It will also create a MCP_SECRET that will be used to authenticate requests from our proxy to your server.
 
-```java HelloWorld.java
-class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
+## Example
+
+```ts
+import { z } from "zod";
+import { tool, createWorkerMcp } from "@mcplug/server/cloudflare";
+import { env } from "cloudflare:workers";
+
+export default createWorkerMcp({
+  secret: env.MCP_SECRET,
+  versions: {
+    "1.0.0": {
+      name: "Weather_Mcp",
+      tools: {
+        "get-weather": tool("Use this tool to get the weather in a given city")
+          .input(
+            z.object({
+              city: z.string()
+            })
+          )
+          .handle(async ({ input }) => {
+            return {
+              city: input.city,
+              temp: 20,
+              unit: "C",
+              condition: "sunny"
+            };
+          })
+      }
     }
-}
+  }
+});
 ```
 
-````md
-```java HelloWorld.java
-class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
-}
-```
-````
+## Deploying the server
+
+To deploy the server you can create a github or gitlab repository and use the cloudflare integration to deploy the server.
+
+<Card
+  horizontal
+  title="Deploying with cloudflare and git"
+  icon="github"
+  href="https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/"
+>
+  More information about deploying with cloudflare and git on the cloudflare documentation.
+</Card>

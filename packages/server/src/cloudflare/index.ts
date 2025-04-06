@@ -4,13 +4,21 @@ import { Tool } from "../core/tools";
 import { Prompt } from "../core/prompts";
 import { Resource } from "../core/resources";
 
+type String<T extends string | {}> = T extends string ? T : never;
+
+type DurableObjectKey = String<
+  | {
+      [K in keyof Cloudflare.Env]: Cloudflare.Env[K] extends DurableObjectNamespace<infer T> ? K : never;
+    }[keyof Cloudflare.Env]
+>;
+
 type DurableMcpOptions = {
   name: string;
 };
 
 type CfServer = {
   secret: string;
-  versions: Record<string, Version<any, any, any> | string>;
+  versions: Record<string, Version<any, any, any> | DurableObjectKey>;
 };
 
 const getObjectFromEnv = (env: any, namespace: string, sessionId?: string | null) => {
@@ -19,12 +27,12 @@ const getObjectFromEnv = (env: any, namespace: string, sessionId?: string | null
   return object;
 };
 
-export const createHandler = (server: CfServer) => {
+export const createWorkerMcp = (server: CfServer) => {
   return {
     fetch: async (request: Request, env?: any, ctx?: ExecutionContext) => {
       const unauthorized = authorize(request, server.secret);
       if (unauthorized) {
-        // return unauthorized;
+        return unauthorized;
       }
       const versionNumber = getVersionNumber(request);
       if (versionNumber instanceof Response) {

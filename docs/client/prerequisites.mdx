@@ -1,0 +1,33 @@
+---
+title: "Prerequisites"
+description: "Prerequisites for using mcplug"
+icon: "notebook"
+---
+
+## Creating a plug
+
+To use the mcplug client, you need to have a PLUG_TOKEN.
+
+A plug is a collection of mcp servers. You can manage your plugs on the [mcplug dashboard](https://mcplug.com/dashboard).
+
+Grab the TOKEN of your plug on the page of your plug.
+
+## Getting started
+
+The mcplug client is a npm package that you can install in your application. First you need to install the package in your application.
+
+```bash
+npm install @mcplug/client
+```
+
+### Initialize the client
+
+```ts
+import { mcplug } from "@mcplug/client";
+
+const tools = await mcplug(PLUG_TOKEN);
+```
+
+### Integrations
+
+<Note>mcplug only works with Vercel AI SDK for now. So you need to use the Vercel AI SDK to use the tools.</Note>

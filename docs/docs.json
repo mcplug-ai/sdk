@@ -28,8 +28,8 @@
             "pages": ["cloudflare/worker", "cloudflare/durableObject"]
           },
           {
-            "group": "Other platforms",
-            "pages": ["hono/introduction"]
+            "group": "Node.js",
+            "pages": ["hono/hono"]
           },
           {
             "group": "Publishing",
@@ -41,17 +41,12 @@
         "tab": "Client",
         "groups": [
           {
-            "group": "API Documentation",
-            "pages": ["api-reference/introduction"]
+            "group": "Overview",
+            "pages": ["client/introduction", "client/prerequisites", "client/constants"]
           },
           {
-            "group": "Endpoint Examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "Integrations",
+            "pages": ["client/vercel-ai-sdk"]
           }
         ]
       }

@@ -19,10 +19,10 @@ Here is a simple example of how to use the mcplug sdk to create a MCP server on 
 
 ```ts
 import { z } from "zod";
-import { tool, createHandler } from "@mcplug/server/cloudflare";
+import { tool, createWorkerMcp } from "@mcplug/server/cloudflare";
 import { env } from "cloudflare:workers";
 
-export default createHandler({
+export default createWorkerMcp({
   secret: env.MCP_SECRET,
   versions: {
     "1.0.0": {

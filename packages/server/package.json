@@ -1,7 +1,7 @@
 {
   "name": "@mcplug/server",
   "private": false,
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Server for mcplug",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,7 +23,6 @@
     "@valibot/to-json-schema": "^1.0.0",
     "arktype": "^2.1.10",
     "hono": "^4.7.5",
-    "mrmime": "^2.0.1",
     "valibot": "^1.0.0",
     "zod": "^3.24.2",
     "zod-to-json-schema": "^3.24.5"

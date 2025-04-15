@@ -18,13 +18,13 @@ Tools are a powerful primitive in the Model Context Protocol (MCP) that enable s
   <p>MCP Documentation</p>
 </Card>
 
-# Define a tool
+# Defining a tool
 
 ```ts
 import { tool } from "@mcplug/server";
 
 export const myTool = tool(
-  "This is the description of the tool. It is highly recommended to provide a detailed description of the tool. In order for the llm to understand how and when to use the tool."
+  "This tool performs a specific action. Provide a detailed description here to help the LLM understand how and when to use this tool effectively."
 )
   .input(
     z.object({
@@ -39,42 +39,51 @@ export const myTool = tool(
     })
   )
   .handle(async ({ input, userId, sessionId, error }) => {
-    try {
-      const result = await fetch("https://api.example.com/data", {
-        method: "POST",
-        body: JSON.stringify({ input, userId, sessionId })
-      });
+    const result = await fetch("https://api.example.com/data", {
+      method: "POST",
+      body: JSON.stringify({ input, userId, sessionId })
+    });
 
-      return {
-        name: result.name,
-        age: result.age
-      };
-    } catch (error) {
-      // You can return an error to the llm to handle it. This will built a standard RPC error.
-      return error("An error occurred while executing the tool.");
-    }
+    return {
+      name: result.name,
+      age: result.age
+    };
   });
 ```
 
+## Description
+
+The first argument of the `tool` function is the description of the tool. Providing a detailed description is crucial, as it helps the LLM understand how and when to use the tool effectively.
+
 ## Input and output schema
 
-You can define an input and output schema for your tool using `zod`, `valibot` or `arktype`.
+You have to define input and output schemas for your tool using `zod`, `valibot`, or `arktype`.
 
-Output schema is not mandatory but highly recommended. It will be used to generate the types for the tool in order to provide a better developer experience when using your mcp server.
+<Info>
+  The output schema is mandatory. It generates the types for the tool to provide a better developer experience when
+  using your MCP server.
+</Info>
 
 ## Handle
 
-The `handle` function is the main function of the tool. It is the function that will be called when the tool is executed.
+The `handle` function is the core of the tool and will be called when the tool is executed.
 
-It will receive the input, an error function, the userId and the sessionId as arguments.
+It receives the following parameters:
 
-You can return an error to the llm to handle it. This will built a standard RPC error.
+- `input`: The data passed to the tool whose type is inferred from the input schema.
+- `error`: A function to return errors
+- `userId`: The ID of the user executing the tool (optional)
+- `sessionId`: The ID of the current session
+- `ctx`: The context of the tool execution that you can create using the `createCtx` function.
+- `env`: The environment variables of your MCP server. As defined in the `.env` file of your project.
 
-SessionId is the id of the session that is currently being executed. It can be used to identify the session and to store data associated with it.
+You can return an error to the LLM using the error function, which will build a standard RPC error.
 
-UserId is the id of the user that is currently executing the tool, it is not mandatory to provide it. But can give you more context about the user.
+The `sessionId` identifies the current execution session and can be used to store associated data.
+
+The `userId` provides context about the user, though it's not mandatory.
 
 <Note>
-The handle function can return either a string or an object. You DO NOT NEED to return an object that follows the mcp specification. This is handled under the hood by the SDK.
-
+  The handle function can return either a string or an object. You don't need to manually format the return value
+  according to the MCP specification - this is handled automatically by the SDK.
 </Note>

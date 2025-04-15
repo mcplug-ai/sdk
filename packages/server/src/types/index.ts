@@ -1,3 +1,6 @@
+import { Prompt } from "../prompts";
+import { Resource } from "../resources";
+import { Tool } from "../tools";
 export { type StandardSchemaV1 } from "./standardSchema";
 
 export type OmitNever<T> = Pick<
@@ -8,14 +11,32 @@ export type OmitNever<T> = Pick<
 >;
 export type MaybePromise<T> = Promise<T> | T;
 
-export interface Register {
-  Ctx: string;
-}
+export interface Register {}
 
-export type Ctx = Register extends {
-  Ctx: infer _Ctx;
+export type CTX = Register extends {
+  CTX: infer _Ctx;
 }
   ? _Ctx
   : undefined;
 
-export type WithCtx<T> = Ctx extends undefined ? T : T & { ctx: Ctx };
+export type ENV = Register extends {
+  ENV: infer _Env;
+}
+  ? _Env
+  : undefined;
+
+export type WithCtx<T> = CTX extends undefined ? T : T & { ctx: CTX };
+export type WithEnv<T> = ENV extends undefined ? T : T & { env: ENV };
+
+export type WithCtxAndEnv<T> = WithCtx<WithEnv<T>>;
+
+export type CreateCtx = (payload: { env: ENV; userId?: string; sessionId?: string }) => MaybePromise<any>;
+
+export type MCPServer = {
+  createCtx?: CreateCtx;
+  tools?: Record<string, Tool<any, any>>;
+  prompts?: Record<string, Prompt<any, any>>;
+  resources?: Record<string, Resource<any>>;
+  name: string;
+  version: string;
+};

@@ -5,7 +5,8 @@ import { proxy } from "./fixtures/proxy";
 
 describe("Client", () => {
   it("should be able to retrieve the tools", async () => {
-    const tools = await mcplug("token", {
+    const tools = await mcplug({
+      token: "token",
       id: "plug1",
       constants: {},
       sessionId: "session1",
@@ -24,7 +25,8 @@ describe("Client", () => {
     expect(tools.search_web).toBeUndefined();
   });
   it("should be able to retrieve the tools with constants", async () => {
-    const tools = await mcplug("token", {
+    const tools = await mcplug({
+      token: "token",
       id: "plug1",
       constants: {
         GOOGLE_API_KEY: "1234567890"
@@ -46,7 +48,8 @@ describe("Client", () => {
   });
 
   it("should be able to exectute the tool", async () => {
-    const tools = await mcplug("token", {
+    const tools = await mcplug({
+      token: "token",
       id: "plug1",
       constants: {
         GOOGLE_API_KEY: "1234567890"
@@ -71,7 +74,17 @@ describe("Client", () => {
 
     expect(result).toBeDefined();
     expect(result?.type).toBe("text");
-    console.log(result);
+
     expect(result?.text).toBe("The weather in São Paulo is sunny");
+
+    const result2 = await tools.search_web?.execute?.(
+      {
+        query: "What is the weather in São Paulo?"
+      },
+      {
+        messages: [],
+        toolCallId: "123"
+      }
+    );
   });
 });

@@ -1,0 +1,48 @@
+---
+title: Context and Env
+description: "Context and Env for mcplug"
+icon: "gear"
+---
+
+Every handle function can receive a context object and an env object.
+
+The env object is the environment variables you define in the .env file of your project.
+
+The context object is the result of the createCtx function you can export from your index.ts file.
+
+<Info>
+  In order to get type safety for the context and env objects, you need the run the dev command. This will generate a
+  global declaration file that will be used by the sdk to type these objects.
+</Info>
+
+Your .env will be deployed on our platform when you publish your MCP server. It will only be accessible during the execution of you MCP server so that it is safe and not exposed to the public.
+
+## Creating the context
+
+```ts index.ts
+export const createCtx = () => {
+  return {
+    db: createDb()
+  };
+};
+
+export default {
+  // ... your mcp server
+};
+```
+
+# Accessing the context and env
+
+You can access the context and env objects in your handle function like this:
+
+```ts
+const myTool = tool("Description of the tool")
+  .input(
+    z.object({
+      name: z.string()
+    })
+  )
+  .handle(async ({ input, context, env }) => {
+    return `Hello ${input.name}`;
+  });
+```

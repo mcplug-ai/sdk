@@ -1,7 +1,7 @@
-import { Ctx, MaybePromise, WithCtx } from "../types";
+import { CTX, MaybePromise, WithCtxAndEnv } from "./types";
 import { MimeType, validateMimeType } from "./mime";
 import { MCPError, mcpError } from "./mcp/errors";
-export type ResourcePayload = WithCtx<{
+export type ResourcePayload = WithCtxAndEnv<{
   uri: string;
   sessionId: string;
   userId: string;
@@ -40,7 +40,7 @@ export class Resource<H extends HandleResourceFunction> {
     uri: string,
     sessionId: string,
     userId: string,
-    ctx?: Ctx
+    ctx?: CTX
   ): Promise<[string, "text" | "blob"] | [MCPError, "error"]> => {
     const result = await this["~handler"]({ uri, sessionId, userId, error, ctx } as ResourcePayload);
 

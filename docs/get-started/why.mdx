@@ -1,0 +1,65 @@
+---
+title: Why MCPlug?
+description: "What problems does MCPlug solve?"
+icon: "thought-bubble"
+---
+
+## Making MCPs simpler to use
+
+Model Control Protocols (MCPs) are rapidly gaining adoption in the AI landscape, but integrating multiple MCPs can be challenging. Whether you're using an LLM client or building your own application, managing different MCPs individually can be complex and time-consuming.
+
+### Combining multiple MCPs into a single interface
+
+MCPlug simplifies this process by enabling you to combine multiple MCPs into a single, unified interface. With just one command or line of code, you can create your own custom "plug" that seamlessly integrates multiple MCPs, significantly improving your development experience.
+
+Additionally, MCPlug serves as a centralized discovery platform for MCPs, making it easier to find and integrate the right tools for your specific needs.
+
+### Preventing Tool Overload
+
+LLM can accept tools, but too many tools can be overwhelming for the LLM that will show degraded performance.
+
+Using MCPlug you can choose which tools to use in your plug and which not. This tree shakings ensures that the LLM only has to deal with the tools that are actually needed.
+
+### Typesafe MCP usage
+
+MCPlug SDK augments the MCP spec with an output schema for tool descriptions. This allows MCPlug to generate types for the tools you use in your plug. This is highly useful when using the plug in an LLM client with, for example, the vercel AI SDK.
+
+## Making MCPs More Secure
+
+### Preventing Tool Poisoning Attacks
+
+Security is a critical concern in the MCP ecosystem. Tool Poisoning Attacks (TPAs) represent a significant threat where malicious MCP servers can embed hidden instructions within tool descriptions that are invisible to users but visible to AI models. These attacks can lead to:
+
+- Unauthorized access to sensitive files (SSH keys, configuration files, databases)
+- Data exfiltration through seemingly innocent tool parameters
+- Manipulation of AI model behavior without user awareness
+
+To address these security challenges, MCPlug implements a comprehensive security infrastructure:
+
+- **Thorough Security Audits**: Our platform conducts rigorous security reviews of all MCP servers, focusing on detecting hidden instructions and potential tool poisoning attempts.
+
+- **Transparent Tool Descriptions**: We ensure that all tool descriptions are fully visible to users, clearly distinguishing between user-visible and AI-visible instructions. This transparency helps prevent the disconnect between what users see and what AI models execute.
+
+{/* - **Community-Driven Security**: Our platform enables community review of implemented tools and reporting of potentially malicious implementations, creating a collaborative security ecosystem. */}
+
+- **Isolated Execution Environment**: All tools are executed in sandboxed environments with strict boundaries, preventing unauthorized access to sensitive system resources and protecting against malicious tool behavior.
+
+- **Cross-Server Protection**: We implement strict boundaries and dataflow controls between different MCP servers, preventing malicious servers from affecting the behavior of trusted ones.
+
+This multi-layered security approach ensures you can use MCPs with confidence, knowing that your system and data remain protected against sophisticated attack vectors like tool poisoning.
+
+### Preventing Rug Pull Attacks
+
+A rug pull attack occurs when a malicious MCP server changes its tool descriptions after gaining user trust, potentially introducing harmful behavior. This is similar to supply chain attacks in software packages, where seemingly safe code can be modified to include malicious functionality after initial approval.
+
+MCPlug's versioning system provides robust protection against rug pull attacks through several key features:
+
+- **Immutable Versioning**: Every version of an MCP server is permanently hosted on our infrastructure. Once a version is published, it cannot be modified or deleted, ensuring that the tools you trust remain exactly as they were when you first approved them.
+
+- **Version Pinning**: When you integrate an MCP server, you can pin to a specific version, preventing any unexpected changes from affecting your system. This means that even if a server owner publishes a new version with potentially malicious changes, your existing integrations remain secure.
+
+- **Transparent Version History**: All versions of MCP servers are publicly accessible, allowing you to review the complete history of changes and verify the integrity of each version before adoption.
+
+This approach ensures that you maintain complete control over which versions of MCP servers you use, effectively eliminating the risk of rug pull attacks while maintaining the flexibility to upgrade to newer versions when you choose to do so.
+
+## Making MCPs More Accessible

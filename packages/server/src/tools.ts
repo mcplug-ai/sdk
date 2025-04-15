@@ -1,13 +1,13 @@
 import { JsonSchema } from "arktype";
-import { Ctx, MaybePromise, OmitNever, WithCtx } from "../types";
-import { StandardSchemaV1, validateInput } from "../types/standardSchema";
-import { toJsonSchema } from "../utils/toJsonSchema";
-import { safeStringify } from "../utils/utils";
+import { CTX, ENV, MaybePromise, OmitNever, WithCtxAndEnv } from "./types";
+import { StandardSchemaV1, validateInput } from "./types/standardSchema";
+import { toJsonSchema } from "./utils/toJsonSchema";
+import { safeStringify } from "./utils/utils";
 import { AudioContent, ImageContent, TextContent, Tool as SpecTool } from "./mcp/spec";
 import { AudioMimeType, ImageMimeType, MimeType } from "./mime";
 import { toDataUrl } from "./resources";
 
-export type ToolPayload<Schema extends StandardSchemaV1 | undefined> = OmitNever<{
+export type ToolPayload<Schema extends StandardSchemaV1 | undefined> = WithCtxAndEnv<{
   input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : never;
   sessionId: string;
   userId: string | null;
@@ -34,9 +34,10 @@ export class Tool<
 
   "~call" = async (
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
-    sessionId: string,
-    userId: string,
-    ctx?: Ctx
+    sessionId?: string,
+    userId?: string,
+    ctx?: CTX,
+    env?: ENV
   ) => {
     try {
       const result = await this["~handler"]({
@@ -44,6 +45,7 @@ export class Tool<
         sessionId,
         userId,
         error,
+        env,
         blob,
         ctx
       } as ToolPayload<Schema>);
@@ -58,13 +60,13 @@ export class Tool<
 
       if (typeof result === "string") {
         return {
-          type: "text",
+          type: "text" as const,
           text: result
         } satisfies TextContent;
       }
 
       return {
-        type: "text",
+        type: "text" as const,
         text: safeStringify(result)
       } satisfies TextContent;
     } catch (err) {
@@ -136,13 +138,13 @@ export const defineTool = <O extends true | undefined>(
   }
 };
 
-class ToolError {
+export class ToolError {
   constructor(private message?: string) {}
   get result() {
     return {
       content: [
         {
-          type: "text",
+          type: "text" as const,
           text: this.message || "An error occurred during tool execution"
         }
       ],

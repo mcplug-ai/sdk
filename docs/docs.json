@@ -17,23 +17,19 @@
         "groups": [
           {
             "group": "Get Started",
-            "pages": ["get-started/overview", "get-started/quick-start"]
+            "pages": ["get-started/overview", "get-started/why"]
           },
           {
             "group": "Concepts",
-            "pages": ["concepts/tool", "concepts/constants", "concepts/prompt", "concepts/resource"]
+            "pages": ["concepts/tool", "concepts/prompt", "concepts/resource"]
           },
           {
-            "group": "Cloudflare",
-            "pages": ["cloudflare/worker", "cloudflare/durableObject"]
-          },
-          {
-            "group": "Node.js",
-            "pages": ["hono/hono"]
+            "group": "Developing a MCP server",
+            "pages": ["server/introduction", "server/context-env", "server/constants"]
           },
           {
             "group": "Publishing",
-            "pages": ["publishing/introduction", "publishing/get-paid"]
+            "pages": ["publishing/prepare", "publishing/publish"]
           }
         ]
       },

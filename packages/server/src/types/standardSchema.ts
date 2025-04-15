@@ -1,4 +1,4 @@
-import { mcpError, MCPError } from "../core/mcp/errors";
+import { mcpError, MCPError } from "../mcp/errors";
 
 /** The Standard Schema interface. */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {

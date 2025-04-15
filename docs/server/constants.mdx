@@ -1,18 +1,18 @@
 ---
 title: "Constants"
-description: "Using constants or secrets in your mcp server"
+description: "Using constants or secrets in your MCP server"
 icon: "key"
 ---
 
-When depoloying your mcp server, you may need the developper who is using your mcp server to give you some constants or secrets. It can be API_KEY for your service or authentication tokens.
+When deploying your MCP server, you may need the developer who is using your MCP server to provide constants or secrets. These can be API keys for your service or authentication tokens.
 
-This constants are not something the LLM will be able to access or use in the prompt. It is the responsibility of the developer to give you the constants.
+These constants are not something the LLM will be able to access or use in the prompt. It is the responsibility of the developer to provide the constants.
 
-For example if I develop a mcp server that is a weather service, the developer will need to give me the API_KEY for the weather service and the LLM will need need to give me the city name.
+For example, if I develop an MCP server that is a weather service, the developer will need to give me the API key for the weather service, and the LLM will need to provide the city name.
 
 ## Define a constant
 
-To define a constant that your tool will access, you have to prefixed a property with an underscore `_` in your input schema.
+To define a constant that your tool will access, you have to prefix a property with an underscore `_` in your input schema.
 
 ```ts
 import { tool } from "@mcplug/server";
@@ -41,15 +41,16 @@ In this example, the `_WEATHER_API_KEY` is a constant that will be provided by t
 
 ## How constants are passed to the tool
 
-Constants are passed to the tool when you the developer initialize the `mcplug` client.
+Constants are passed to the tool when the developer initializes the `mcplug` client.
 
 ```ts
 import { mcplug } from "@mcplug/client";
 
-const tools = await mcplug(MCPLUG_TOKEN, {
+const tools = await mcplug({
+  token: MCPLUG_TOKEN,
   id: "plug_id",
   constants: {
-    _WEATHER_API_KEY: "1234567890"
+    WEATHER_API_KEY: "1234567890"
   }
 });
 // ... rest of the code

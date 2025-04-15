@@ -1,0 +1,82 @@
+---
+title: Quick start
+description: "How to create yout own MCP server with the MCPlug SDK"
+icon: "flag"
+---
+
+# Quick start
+
+To get started just run the following command:
+
+```bash
+npx mcplug init my_mcp_server
+```
+
+This will create a new directory called `my_mcp_server` with the following files:
+
+- `src/index.ts`: The entry point of your MCP server.
+- `package.json`: The package.json file for your MCP server.
+- `tsconfig.json`: The tsconfig.json file for your MCP server.
+- `.env`: The environment variables for your MCP server.
+- `README.md`: The README file for your MCP server.
+- `changelog directory`: The changelog directory for your MCP server.
+
+Install the dependencies and run the dev server. This will launch a vite server that will bundle your MCP server that will also generate a global declaration file for the context and env objects.
+
+## Your MCP server code
+
+You can then start developing your MCP server by adding tools to the `src/index.ts` file.
+
+The MCP is a simple export default object that contains a record of tools, prompts and resources of your MCP server.
+
+```ts src/index.ts
+import { tool } from "@mcplug/server";
+import { z } from "zod";
+
+export const createCtx = () => {
+  return {
+    //  return any context you need. It will be available in all your tools, prompts and resources
+  };
+};
+
+export default {
+  tools: {
+    "get-weather": tool("Use this tool to get the weather in a given city")
+      .input(
+        z.object({
+          city: z.string()
+        })
+      )
+      .output(
+        z.object({
+          city: z.string(),
+          temp: z.number(),
+          unit: z.string(),
+          condition: z.string()
+        })
+      )
+      .handle(async ({ input }) => {
+        return {
+          city: input.city,
+          temp: 20,
+          unit: "C",
+          condition: "sunny"
+        };
+      })
+  }
+};
+```
+
+In this example we have a tool called `get-weather` that takes a city name as input and returns the weather in that city.
+
+<Card icon="screwdriver-wrench" horizontal title="Tools" href="/concepts/tools">
+  Learn more about tools
+</Card>
+
+You can see that the index.ts file exports a createCtx function. This function is used to create the context object that will be available in all your tools, prompts and resources.
+
+<Card icon="screwdriver-wrench" horizontal title="Context and Env" href="/server/context-env">
+  Learn more about context and env
+</Card>
+
+That's it! You have now created your own MCP server.

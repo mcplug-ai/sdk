@@ -1,14 +1,16 @@
 ---
 title: "Constants"
-description: "Using constants in the mcplug client"
+description: "Using constants in the MCPlug client"
 icon: "key"
 ---
 
-Constants are a way to send values to MCP servers. These values are typically sensitive information such as API keys, authentication tokens, or other configuration parameters that should not be exposed to the LLM.
+# Constants
+
+Constants provide a secure method for passing sensitive values to MCP servers. These include API keys, authentication tokens, and configuration parameters that should remain hidden from the LLM.
 
 ## Passing Constants to the Client
 
-When initializing the mcplug client, you can provide constants as part of the configuration:
+When initializing the mcplug client, provide constants as part of the configuration:
 
 ```ts
 import { mcplug } from "@mcplug/client";
@@ -24,17 +26,16 @@ const tools = await mcplug(MCPLUG_TOKEN, {
 
 ## How Constants Work
 
-Constants are identified by an underscore prefix (`_`) in the tool's input schema on the server side. When you provide these constants during client initialization, they are automatically passed to the corresponding tools when the tools are called.
+On the server side, constants are identified by an underscore prefix (`_`) in the tool's input schema. When you provide these constants during client initialization, they're automatically passed to the corresponding tools when called.
 
-The LLM will not have access to these constants, making this approach secure for handling sensitive information.
+This approach keeps sensitive information secure, as the LLM has no access to these constants.
 
-## Example
+## Weather API Example
 
-Let's say you want to use a weather MCP server that needs a paid API key to get the weather in a specific city.
+Consider a weather MCP server requiring a paid API key to fetch weather data for specific cities:
 
-The developer of the MCP server has created a tool called `getWeather` that takes a city name as an argument and also the `WEATHER_API_KEY` constant.
-
-It is your responsibility to provide the `WEATHER_API_KEY` constant.
+1. The MCP server developer creates a `getWeather` tool that requires a city name and the `WEATHER_API_KEY` constant
+2. You provide the API key during client initialization
 
 ```ts
 const tools = await mcplug(MCPLUG_TOKEN, {
@@ -44,22 +45,21 @@ const tools = await mcplug(MCPLUG_TOKEN, {
 
 await generateText({
   model: yourModel,
-  prompt: "What is the weather in Tokyo?"
-  tools,
+  prompt: "What is the weather in Tokyo?",
+  tools
 });
 ```
 
-## Another example
+## Gmail Integration Example
 
-Let's say you want to use a Gmail tool.
+For Gmail tool integration:
 
-It is your responsibility to provide all the necessary credentials to use the Gmail tool.
+1. You must provide all necessary authentication credentials
+2. Mcplug doesn't generate these credentials
+3. You'll need to create your own OAuth2.0 client ID and client secret and store them securely
+4. Store the refresh token in your database as well
 
-Mcplug does not provide a way to generate these credentials. You will need to build your own OAuth2.0 client ID and client secret and store them in your database.
-
-Then you will need to store the refresh token in your database as well.
-
-Once you have the client ID, client secret and refresh token, you can pass them to the client as constants.
+Once you have the required credentials, pass them to the client as constants:
 
 ```ts
 const tools = await mcplug(MCPLUG_TOKEN, {

@@ -1,63 +1,71 @@
 ---
 title: Introduction
 description: "Welcome to the home of your new documentation"
+icon: "plug"
 ---
 
-## What is Mcplug?
+## What is MCPlug?
 
-Mcplug is a an open registry of mcp servers that simplifies their discovery and use inside the code of your application.
+MCPlug is a an open registry of remote MCP servers that allow anyone to deploy their own MCP server and use other's MCP servers in their code (or soon in their favorite LLM client).
 
-We provide a server sdk that streamlines the process of creating and versionning a MCP server.
+MCPlug is a hosting provider for MCP servers. When you publish a MCP server using our SDK, it will live forever on our infrastructure and will be available to anyone who wants to use it. You can, of course, publish an illimited number of versions of a MCP server. Each version, will stay available as long as we stay in business.
 
-The sdk is using the latest [Streamable HTTP specification of 20025-03-06](https://spec.modelcontextprotocol.io/specification/2025-03-26/).
+We provide a server sdk that streamlines the process of creating and publishing a MCP server.
 
-Although the sdk is made for developers to publish their own MCP servers on Mcplug.ai it can be used to deploy standards MCP servers elsewhere.
+The sdk is using the latest [Streamable HTTP specification of 2025-03-26](https://spec.modelcontextprotocol.io/specification/2025-03-26/).
+
+This documentation will guide you through the process of creating a MCP server and publishing it on MCPlug.
 
 ## Simple example
 
-Here is a simple example of how to use the mcplug sdk to create a MCP server on cloudflare workers.
+This is what a MCP server looks like when using the MCPlug SDK.
 
 ```ts
 import { z } from "zod";
-import { tool, createWorkerMcp } from "@mcplug/server/cloudflare";
-import { env } from "cloudflare:workers";
+import { tool } from "@mcplug/server";
 
-export default createWorkerMcp({
-  secret: env.MCP_SECRET,
-  versions: {
-    "1.0.0": {
-      name: "Weather_Mcp",
-      tools: {
-        "get-weather": tool("Use this tool to get the weather in a given city")
-          .input(
-            z.object({
-              city: z.string()
-            })
-          )
-          .handle(async ({ input }) => {
-            return {
-              city: input.city,
-              temp: 20,
-              unit: "C",
-              condition: "sunny"
-            };
-          })
-      }
-    }
+export default {
+  tools: {
+    "get-weather": tool("Use this tool to get the weather in a given city")
+      .input(
+        z.object({
+          city: z.string()
+        })
+      )
+      .output(
+        z.object({
+          city: z.string(),
+          temp: z.number(),
+          unit: z.string(),
+          condition: z.string()
+        })
+      )
+      .handle(async ({ input }) => {
+        return {
+          city: input.city,
+          temp: 20,
+          unit: "C",
+          condition: "sunny"
+        };
+      })
   }
-});
+};
 ```
 
-At is core a server is just an object of versions.
-
-Each version has a name and records of tools / prompts / ressources.
+## Concepts
 
 <Card icon="screwdriver-wrench" horizontal title="Tools" href="/concepts/tools">
   Learn more about tools
 </Card>
 <Card icon="thought-bubble" horizontal title="Prompts" href="/concepts/prompts">
-  Learn more about prompts
+  Learn more about prompts (in progress)
 </Card>
 <Card icon="files" horizontal title="Ressources" href="/concepts/ressources">
-  Learn more about ressources
+  Learn more about ressources (in progress)
+</Card>
+
+## Development
+
+<Card icon="flag" horizontal title="Quick start" href="/get-started/quick-start">
+  Quick start guide
 </Card>

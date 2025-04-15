@@ -19,7 +19,12 @@ import { mcplug } from "@mcplug/client";
 const result = await generateText({
   model: yourModel,
   //   this single line is enough to give your llm access to the tools of mcplug
-  tools: await mcplug(PLUG_TOKEN),
+  tools: await mcplug({
+    token: PLUG_TOKEN,
+    id: "plug_id"
+  }),
+  // This will insure the LLM can go back and forth between the tools and the prompt
+  maxSteps: 10,
   prompt: "What is the weather in San Francisco?"
 });
 ```

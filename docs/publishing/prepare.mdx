@@ -1,0 +1,32 @@
+---
+title: "Prepare your MCP server"
+description: "Prepare your MCP server for publishing"
+icon: "pencil"
+---
+
+## Server informations
+
+Similar to a npm we rely on the package.json file to gather information about your MCP server.
+
+This are the fields you need to fill:
+
+- `name`: The name of your MCP server.
+- `description`: A description of your MCP server.
+- `version`: The version of your MCP server. It must be a valid semver version.
+  {/* - `license`: The license of your MCP server. */}
+- `repository.url`: The url of the repository of your MCP server if you have one.
+- `homepage`: The url of the homepage of your service if you have one.
+
+## Readme and changelog
+
+We also rely on a README.md file to generate the documentation of your MCP server and a version changelog found inside the changelogs folder.
+
+The README will be used on the main page of your MCP server and the changelog will be used to generate the changelog of your MCP server.
+
+One using the dev command, the changelog will be generated automatically based on the version number you are currently on.
+
+## Defining outout
+
+We have made the choice to make output mandatory for tools. This will improve the developer experience when using your MCP server.
+
+Make sure every tool has an output schema otherwise it will be rejected.

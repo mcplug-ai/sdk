@@ -1,7 +1,10 @@
-import { Message, ToolSet, jsonSchema } from "ai";
+import { ToolSet, jsonSchema } from "ai";
 import { Tool as McpTool, CallToolResult } from "@mcplug/server";
+import { Plug, PlugResponse } from "./types";
+import { rpc } from "./rpc";
+import { extractToolParams } from "./utils";
 
-const DEV = true;
+const DEV = false;
 
 const tryParse = (value: string) => {
   if (typeof value === "string") {
@@ -13,26 +16,10 @@ const tryParse = (value: string) => {
   }
 };
 
-const BASE_URL = DEV ? "http://localhost:1111" : "https://tools.mcplug.ai";
+const BASE_URL = DEV ? "http://localhost:1111" : "https://proxy.mcplug.ai";
 
-type PlugServer = {
-  id: string;
-  servers: {
-    id: string;
-    version: string;
-    tools: McpTool[];
-  }[];
-};
-
-let messages: Message[] = [
-  {
-    role: "user",
-    content: "What is the weather in Tokyo?",
-    id: "1"
-  }
-];
-
-type McplugOptions = {
+export type McplugOptions = {
+  token: string;
   id: string;
   constants: Record<string, string>;
   sessionId: string;
@@ -43,48 +30,51 @@ type McplugOptions = {
 class McpPlug {
   tools: ToolSet;
   fetch = fetch;
+  rpc: ReturnType<typeof rpc>;
   constructor(
     private readonly token: string,
     private readonly id: string,
     private readonly constants: Record<string, string>,
-    private server: PlugServer,
+    private plugResponse: PlugResponse,
     private sessionId: string,
     private userId: string,
     _fetch?: McplugOptions["fetch"]
   ) {
-    this.tools = this.createToolSetHandler(this.server);
+    this.tools = this.createToolSetHandler(this.plugResponse);
     if (_fetch) {
       this.fetch = _fetch;
     }
+
+    this.rpc = rpc({
+      id: this.id,
+      token: this.token,
+      userId: this.userId,
+      sessionId: this.sessionId,
+      fetch: this.fetch
+    });
   }
 
-  private createToolSetHandler = (plug: PlugServer): ToolSet => {
-    return plug.servers.reduce((acc, { tools, id }) => {
+  private createToolSetHandler = (plug: PlugResponse): ToolSet => {
+    return plug.versions.reduce((acc, { tools, versionId }) => {
       tools.forEach((tool) => {
         let accName = tool.name;
-        const duplicates = Object.keys(acc).filter((key) => key.startsWith(tool.name));
-        if (duplicates.length > 0) {
-          accName = `${tool.name}_${duplicates.length + 1}`;
+        let duplicate = Object.keys(acc).find((key) => key == accName);
+        let duplicateCount = 0;
+
+        while (duplicate) {
+          accName = `${tool.name}_${duplicateCount + 1}`;
+          duplicate = Object.keys(acc).find((key) => key == accName);
+          duplicateCount++;
         }
 
-        const { constantsParams, aiParameters } = Object.entries(tool.inputSchema.properties ?? {}).reduce(
-          (acc, [key, value]) => {
-            if (key.startsWith("_")) {
-              Object.assign(acc.constantsParams, { [key.replace("_", "")]: value });
-            } else {
-              Object.assign(acc.aiParameters, { [key]: value });
-            }
-            return acc;
-          },
-          { constantsParams: {} as Record<string, object>, aiParameters: {} as Record<string, object> }
-        );
+        const { constantsParams, aiParameters } = extractToolParams(tool);
 
         const hasConstantsSet = Object.keys(constantsParams)
           .filter((key) => tool.inputSchema.required?.some((required) => required.replace("_", "") === key))
           .every((key) => this.constants[key]);
 
         const toolConstants = Object.keys(constantsParams).reduce((acc, key) => {
-          Object.assign(acc, { [key]: this.constants[key] });
+          Object.assign(acc, { [`_${key}`]: this.constants[key] });
           return acc;
         }, {} as Record<string, string>);
 
@@ -96,7 +86,7 @@ class McpPlug {
                 type: "object",
                 properties: aiParameters
               }),
-              execute: this.executeTool(id, tool.name, toolConstants)
+              execute: this.executeTool(versionId, tool.name, toolConstants)
             }
           });
         }
@@ -107,25 +97,15 @@ class McpPlug {
   };
 
   private executeTool =
-    (serverId: string, toolName: string, constants: Record<string, string>) => async (args: any) => {
-      const body = JSON.stringify({
-        name: toolName,
-        arguments: { ...args, ...constants }
-      });
-
-      const response = await this.fetch(`${BASE_URL}/${this.id}/${serverId}/${toolName}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.token}`,
-          "mcp-session-id": this.sessionId,
-          "mcp-user-id": this.userId
+    (versionId: string, toolName: string, constants?: Record<string, string>) => async (args: any) => {
+      const data = await this.rpc(
+        "tools/call",
+        {
+          name: toolName,
+          arguments: { ...args, ...constants }
         },
-        body
-      });
-
-      const data = (await response.json()) as { result?: CallToolResult };
-
+        versionId
+      );
       if (!data.result) {
         return null;
       }
@@ -150,12 +130,16 @@ class McpPlug {
     };
 }
 
-export const mcplug = async (
-  token: string,
-  { id, constants, sessionId, userId, fetch: _fetch = fetch }: McplugOptions
-): Promise<ToolSet> => {
+export const mcplug = async ({
+  token,
+  id,
+  constants,
+  sessionId,
+  userId,
+  fetch: _fetch = fetch
+}: McplugOptions): Promise<ToolSet> => {
   try {
-    const response = await _fetch(`${BASE_URL}/${id}`, {
+    const response = await _fetch(`${BASE_URL}/v1/plug/${id}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -168,9 +152,8 @@ export const mcplug = async (
       const errorText = await response.text();
       throw new Error(`Server responded with status ${response.status}: ${errorText}`);
     }
-
-    const server = (await response.json()) as PlugServer;
-    const plug = new McpPlug(token, id, constants, server, sessionId, userId, _fetch);
+    const plugResponse = (await response.json()) as PlugResponse;
+    const plug = new McpPlug(token, id, constants, plugResponse, sessionId, userId, _fetch);
     return plug.tools;
   } catch (error) {
     console.error("Error in mcplug:", error);

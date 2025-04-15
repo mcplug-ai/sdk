@@ -1,10 +1,10 @@
-import { Ctx, MaybePromise, OmitNever, WithCtx } from "../types";
-import { StandardSchemaV1, validateInput } from "../types/standardSchema";
-import { toJsonSchema } from "../utils/toJsonSchema";
+import { CTX, MaybePromise, OmitNever, WithCtxAndEnv } from "./types";
+import { StandardSchemaV1, validateInput } from "./types/standardSchema";
+import { toJsonSchema } from "./utils/toJsonSchema";
 import { mcpError } from "./mcp/errors";
 import { Prompt as MCPPrompt } from "./mcp/spec";
 
-export type PromptPayload<Schema extends StandardSchemaV1 | undefined> = WithCtx<
+export type PromptPayload<Schema extends StandardSchemaV1 | undefined> = WithCtxAndEnv<
   OmitNever<{
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : never;
     sessionId: string;
@@ -33,7 +33,7 @@ export class Prompt<Schema extends StandardSchemaV1 | undefined, H extends Handl
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
     sessionId: string,
     userId: string,
-    ctx?: Ctx
+    ctx?: CTX
   ) => {
     return this["~handler"]({ input, sessionId, userId, error, ctx } as PromptPayload<Schema>);
   };

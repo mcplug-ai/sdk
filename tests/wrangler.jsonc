@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcplug-mcp",
+
+  "compatibility_date": "2025-03-27",
+  "observability": { "enabled": true }
+}

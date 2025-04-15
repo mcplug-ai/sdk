@@ -1,13 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
-    "exactOptionalPropertyTypes": true,
-    "lib": ["ESNext", "DOM"],
-    "types": ["node"]
-  }
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/vitest-pool-workers"]
+  },
+  "include": ["./**/*.ts"]
 }

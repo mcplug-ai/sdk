@@ -17,7 +17,9 @@
     "test": "vitest --ui"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^1.2.8",
     "@ai-sdk/openai": "^1.3.3",
+    "@cloudflare/vitest-pool-workers": "^0.8.14",
     "@mcplug/client": "workspace:*",
     "@mcplug/server": "workspace:*",
     "@vitest/ui": "^3.0.9",
@@ -27,6 +29,7 @@
     "hono": "^4.7.5",
     "vite": "^6.2.3",
     "vitest": "~3.0.7",
+    "wrangler": "^3.114.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {

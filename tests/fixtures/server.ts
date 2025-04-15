@@ -1,4 +1,5 @@
-import { createHonoMcp, resource } from "@mcplug/server/hono";
+import { createMCP, resource } from "@mcplug/server";
+import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { z } from "zod";
 import {
   ClientRequest,
@@ -26,67 +27,98 @@ import {
   prompt,
   tool
 } from "@mcplug/server";
-export const app = createHonoMcp({
-  secret: "secret",
-  versions: {
-    "1.0.0": {
-      tools: {
-        get_weather: tool("Get the weather in a given city")
-          .input(
-            z.object({
-              city: z.string()
-            })
-          )
-          .handle(async ({ input }) => {
-            return `The weather in ${input.city} is sunny`;
-          }),
-        with_error: tool("This tool will always return an error").handle(async ({ error }) => {
-          return error("This is a test error");
-        }),
-        search_web: tool("Search the web for a given query")
-          .input(
-            z.object({
-              query: z.string(),
-              _GOOGLE_API_KEY: z.string()
-            })
-          )
-          .handle(async ({ input }) => {
-            return {
-              type: "text",
-              text: `I did not find anything about ${input.query}`
-            };
-          })
-      },
-      prompts: {
-        get_weather: prompt("Get the weather in a given city")
-          .input(
-            z.object({
-              city: z.string()
-            })
-          )
-          .handle(async ({ input }) => {
-            return {
-              type: "text",
-              text: `The weather in ${input.city} is sunny`
-            };
-          })
-      },
-      resources: {
-        weather: resource("Use this resource to get the weather table in a given city")
-          .type("text/csv")
-          .handle(async () => {
-            return `city,temperature,humidity
+
+declare module "@mcplug/server" {
+  interface Register {
+    CTX: {
+      _GOOGLE_API_KEY: string;
+    };
+    ENV: {
+      _GOOGLE_API_KEY: string;
+    };
+  }
+}
+
+const tools = {
+  get_weather: tool("Get the weather in a given city")
+    .input(
+      z.object({
+        city: z.string()
+      })
+    )
+    .handle(async ({ input, ctx, env }) => {
+      console.log({ ctx, env, input });
+      return `The weather in ${input.city} is sunny`;
+    }),
+  with_error: tool("This tool will always return an error").handle(async ({ error }) => {
+    return error("This is a test error");
+  }),
+  search_web: tool("Search the web for a given query")
+    .input(
+      z.object({
+        query: z.string(),
+        _GOOGLE_API_KEY: z.string()
+      })
+    )
+    .handle(async ({ input, ctx, env }) => {
+      console.log({ ctx, env, input });
+      return {
+        type: "text",
+        text: `I did not find anything about ${input.query}`
+      };
+    })
+};
+
+const resources = {
+  weather: resource("Use this resource to get the weather table in a given city")
+    .type("text/csv")
+    .handle(async () => {
+      return `city,temperature,humidity
 San Francisco,60,50
 New York,65,45
 Los Angeles,70,40
 Chicago,55,55
 Miami,80,60
 `;
-          })
-      }
-    }
-  }
+    })
+};
+
+const prompts = {
+  get_weather: prompt("Get the weather in a given city")
+    .input(
+      z.object({
+        city: z.string()
+      })
+    )
+    .handle(async ({ input }) => {
+      return {
+        type: "text",
+        text: `The weather in ${input.city} is sunny`
+      };
+    })
+};
+
+const mcp = createMCP({
+  name: "test",
+  version: "1.0.0",
+  prompts,
+  createCtx: (payload) => {
+    return {
+      payload: "here"
+    };
+  },
+  resources,
+  tools
 });
+
+const app = {
+  fetch: async (request: Request) => {
+    return mcp.fetch(request, { env: "here" });
+  },
+  define: mcp.define
+};
+
+export default app;
 
 type Payloads = {
   initialize: InitializeRequest["params"];
@@ -132,7 +164,7 @@ type Results = {
 };
 
 export const rpc = async <M extends keyof Payloads>(method: M, body: Payloads[M]): Promise<Results[M]> => {
-  const request = new Request("http://localhost:3000/1.0.0", {
+  const request = new Request("http://localhost:3000", {
     method: "POST",
     body: JSON.stringify({
       jsonrpc: "2.0",

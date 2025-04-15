@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rpc } from "./fixtures/server";
+import app, { rpc } from "./fixtures/server";
 import { LATEST_PROTOCOL_VERSION } from "@mcplug/server";
 
 describe("MCP Server", () => {
@@ -232,6 +232,13 @@ describe("MCP Server", () => {
       const response = await rpc("ping", {});
       expect(response.result).toBeDefined();
       expect(response.jsonrpc).toBe("2.0");
+    });
+  });
+
+  describe("define", () => {
+    it("should describe the server", async () => {
+      const definition = app.define();
+      console.log(definition);
     });
   });
 });

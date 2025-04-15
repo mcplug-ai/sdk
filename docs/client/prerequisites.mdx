@@ -25,7 +25,10 @@ npm install @mcplug/client
 ```ts
 import { mcplug } from "@mcplug/client";
 
-const tools = await mcplug(PLUG_TOKEN);
+const tools = await mcplug({
+  token: PLUG_TOKEN,
+  id: "plug_id"
+});
 ```
 
 ### Integrations

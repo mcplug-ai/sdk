@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "mcplugclient": {
+      "command": "npx",
+      "args": ["-y", "@mcplug/client", "01JRTXGPQ9EASHWDK7V12Z51FY"],
+      "env": {
+        "MCPLUG_TOKEN": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IndDcjAzcVhIMVo1Vkw5QWtPT2VmcjAwNmtDeFV6MHBKIiwicGVybWlzc2lvbnMiOlsidXNlIiwicHVibGlzaCJdLCJpYXQiOjE3NDQ2NTk4MDV9.I6M6mZP4XK9bIScnlar4WdvtEO4Z1wsfI27SnHWJsr8"
+      }
+    },
+    "mcplugclient2": {
+      "command": "npx",
+      "args": ["-y", "gnagnagnagnagnagna", "01JRTXGPQ9EASHWDK7V12Z51FY"],
+      "env": {
+        "MCPLUG_TOKEN": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IndDcjAzcVhIMVo1Vkw5QWtPT2VmcjAwNmtDeFV6MHBKIiwicGVybWlzc2lvbnMiOlsidXNlIiwicHVibGlzaCJdLCJpYXQiOjE3NDQ2NTk4MDV9.I6M6mZP4XK9bIScnlar4WdvtEO4Z1wsfI27SnHWJsr8"
+      }
+    }
+  }
+}

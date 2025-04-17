@@ -1,9 +1,8 @@
 import { ToolSet, jsonSchema } from "ai";
-import { Tool as McpTool, CallToolResult } from "@mcplug/server";
-import { Plug, PlugResponse } from "./types";
+import { PlugResponse } from "./types";
 import { rpc } from "./rpc";
 import { extractToolParams } from "./utils";
-
+export * from "./utils";
 const DEV = false;
 
 const tryParse = (value: string) => {

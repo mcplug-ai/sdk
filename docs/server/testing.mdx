@@ -1,0 +1,45 @@
+---
+title: Testing
+description: "Testing your MCP server"
+icon: "flask"
+---
+
+## Unit testing
+
+When initializing your MCP server, the CLI will also scaffold the necessary files to perform unit testing with Vitest.
+
+The tests are located in the `test` directory and should be named using the pattern `[name].test.ts`.
+
+To run the tests, you can use the following command:
+
+```bash
+npm run test
+```
+
+Or, if you prefer using the @vitest/ui interface like we do:
+
+```bash
+npm run test:ui
+```
+
+## Using an AI client
+
+When running the dev command, the Vite plugin will create a `.cursor/mcp.json` file in the root of your project. This file will connect Cursor to your MCP server using the `@mcplug/client` package.
+
+You can also use this same JSON file to connect your MCP server to other AI clients like Claude.
+
+<Info>
+  If you have configured constants in your tools, you will need to set them in the `mcp.json` file inside the `env`
+  property.
+
+For example, if your tool has a constant called `_API_KEY`, you would set it in the `env` property like this:
+
+```json
+{
+  "env": {
+    "API_KEY": "your_api_key"
+  }
+}
+```
+
+</Info>

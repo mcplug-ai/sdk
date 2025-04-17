@@ -9,7 +9,8 @@ Once you have prepared your MCP server, you can publish it to the MCP registry.
 To publish your MCP server, you need to run the following command:
 
 ```bash
-npx mcplug publish
+npm run publish
+# it will run npx mcplug publish
 ```
 
 This will launch a build process, bundling your MCP server into a single Cloudflare Worker file.
@@ -17,8 +18,10 @@ This will launch a build process, bundling your MCP server into a single Cloudfl
 Your MCP server will be deployed and made available on the MCPlug registry and everyone will be able to use it in their code.
 
 <Warning>
-  Every MCP server will pass an audit process to ensure it is secure and does not contain any malicious code. If your
-  MCP server does not pass the audit process, it will still be published but exposed as unsafe.
+  Every MCP server will pass an audit process to ensure it is secure and does not contain any malicious code.
+
+If your
+MCP server does not pass the audit process, you can choose to publish and it will be exposed as unsafe. Or you can check the audit file and fix the issues before choosing to publish.
 
 If you find the audit process too strict, please let us know and we will see what we can do.
 

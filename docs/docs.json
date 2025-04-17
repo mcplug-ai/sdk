@@ -25,7 +25,7 @@
           },
           {
             "group": "Developing a MCP server",
-            "pages": ["server/introduction", "server/context-env", "server/constants"]
+            "pages": ["server/introduction", "server/context-env", "server/constants", "server/testing"]
           },
           {
             "group": "Publishing",
@@ -42,7 +42,7 @@
           },
           {
             "group": "Integrations",
-            "pages": ["client/vercel-ai-sdk"]
+            "pages": ["client/vercel-ai-sdk", "client/cursor"]
           }
         ]
       }
@@ -63,8 +63,8 @@
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/dark.png",
+    "dark": "/logo/light.png"
   },
   "navbar": {
     "links": [

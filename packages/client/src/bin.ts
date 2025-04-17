@@ -1,42 +1,103 @@
 #!/usr/bin/env node
+import { program } from "commander";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  GetPromptRequestSchema,
-  InitializeRequestSchema,
-  InitializeResult,
-  ListPromptsRequestSchema,
-  ListResourcesRequestSchema,
-  ListToolsRequestSchema,
-  ListToolsResult,
-  ReadResourceRequestSchema,
-  GetPromptRequest,
-  UnsubscribeRequestSchema
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import { rpc } from "./rpc";
 import { PlugResponse } from "./types";
-import { extractToolParams } from "./utils";
-import { Resource, Prompt } from "@mcplug/server";
+import { getToolDefinitions, ToolDefinition } from "./utils";
 
 class RemoteMCPlugClient {
   public readonly server: Server;
   rpc: ReturnType<typeof rpc>;
-  toolList: ListToolsResult["tools"];
-  toolVersionId = new Map<string, string>();
-  toolConstants = new Map<string, Record<string, string>>();
-  toolRealName = new Map<string, string>();
-  promptVersionId = new Map<string, string>();
-  promptRealName = new Map<string, string>();
-  resourceVersionId = new Map<string, string>();
-  resourceRealName = new Map<string, string>();
-  prompts: Prompt[];
-  resources: Resource[];
+  toolDefinitions: Map<string, ToolDefinition>;
+  availableTools: ListToolsResult["tools"];
+
+  constructor(private readonly id: string, private readonly env: Record<string, string>, private plug: PlugResponse) {
+    this.server = new Server(
+      {
+        name: "MCPlug Client",
+        version: "1.0.0"
+      },
+      {
+        capabilities: {
+          tools: {}
+        }
+      }
+    );
+
+    this.rpc = rpc({
+      id: this.id,
+      token: this.env.MCPLUG_TOKEN,
+      userId: "userId",
+      sessionId: "sessionId"
+    });
+
+    const [availableTools, toolDefinitions] = getToolDefinitions(this.plug, this.env);
+
+    this.availableTools = availableTools;
+    this.toolDefinitions = toolDefinitions;
+
+    this.setupHandlers();
+  }
+
+  setupHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async (request) => {
+      return {
+        tools: this.availableTools
+      };
+    });
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const toolDefinition = this.toolDefinitions.get(request.params.name);
+
+      if (!toolDefinition) {
+        return {
+          isError: true,
+          content: ["Tool not found"]
+        };
+      }
+
+      const result = await this.rpc(
+        "tools/call",
+        {
+          name: toolDefinition.name,
+          arguments: {
+            ...toolDefinition.constants,
+            ...request.params.arguments
+          }
+        },
+        toolDefinition.versionId
+      );
+
+      return {
+        isError: !!result.error || result.result.isError,
+        content: result.result.content
+      };
+    });
+  }
+  static async start(id: string, env: Record<string, string>, devPort?: string) {
+    const response = await fetch(`https://proxy.mcplug.ai/v1/plug/${id}`, {
+      headers: {
+        Authorization: `Bearer ${env.MCPLUG_TOKEN}`
+      }
+    });
+
+    const plug = (await response.json()) as PlugResponse;
+
+    const client = new RemoteMCPlugClient(id, env, plug);
+
+    const transport = new StdioServerTransport();
+    await client.server.connect(transport);
+  }
+}
+
+class LocalMCPlugClient {
+  rpc: ReturnType<typeof rpc>;
+  public readonly server: Server;
   constructor(
-    private readonly id: string,
+    private readonly port: string,
     private readonly env: Record<string, string>,
-    private readonly plug: PlugResponse,
-    private readonly sessionId: string
+    tools: ListToolsResult["tools"]
   ) {
     this.server = new Server(
       {
@@ -44,185 +105,123 @@ class RemoteMCPlugClient {
         version: "1.0.0"
       },
       {
-        capabilities: plug.initializeResult.capabilities as any
+        capabilities: {
+          tools: {}
+        }
       }
     );
-
     this.rpc = rpc({
-      id: this.id,
-      token: this.env.MC_PLUG_TOKEN,
-      userId: this.env.MC_PLUG_USER_ID,
-      sessionId: this.sessionId
-    });
-
-    this.toolList = this.plug.versions.reduce((acc, version) => {
-      version.tools.forEach((tool) => {
-        let accName = tool.name;
-        let duplicate = Object.keys(acc).find((key) => key == accName);
-        let duplicateCount = 0;
-
-        while (duplicate) {
-          accName = `${tool.name}_${duplicateCount + 1}`;
-          duplicate = Object.keys(acc).find((key) => key == accName);
-          duplicateCount++;
-        }
-        this.toolVersionId.set(accName, version.versionId);
-        this.toolRealName.set(accName, tool.name);
-        const { constantsParams, aiParameters } = extractToolParams(tool);
-
-        const hasConstantsSet = Object.keys(constantsParams)
-          .filter((key) => tool.inputSchema.required?.some((required) => required.replace("_", "") === key))
-          .every((key) => this.env[key]);
-        const toolConstants = Object.keys(constantsParams).reduce((acc, key) => {
-          Object.assign(acc, { [key]: this.env[key] });
-          return acc;
-        }, {} as Record<string, string>);
-
-        if (hasConstantsSet) {
-          this.toolConstants.set(accName, toolConstants);
-          acc.push({
-            inputSchema: {
-              type: "object",
-              properties: aiParameters
-            },
-            name: tool.name,
-            description: tool.description
-          });
-        }
-      });
-
-      return acc;
-    }, [] as ListToolsResult["tools"]);
-
-    this.prompts = this.plug.versions.reduce((acc, version) => {
-      version.prompts?.forEach((prompt) => {
-        let accName = prompt.name;
-        let duplicate = Object.keys(acc).find((key) => key == accName);
-        let duplicateCount = 0;
-
-        while (duplicate) {
-          accName = `${prompt.name}_${duplicateCount + 1}`;
-          duplicate = Object.keys(acc).find((key) => key == accName);
-          duplicateCount++;
-        }
-        this.promptVersionId.set(accName, version.versionId);
-        this.promptRealName.set(accName, prompt.name);
-        acc.push({
-          name: prompt.name,
-          description: prompt.description || "",
-          arguments: prompt.arguments!
-        });
-      });
-      return acc;
-    }, [] as Prompt[]);
-
-    this.resources = this.plug.versions.reduce((acc, version) => {
-      version.resources?.forEach((resource) => {
-        let accName = resource.name;
-        let duplicate = Object.keys(acc).find((key) => key == accName);
-        let duplicateCount = 0;
-
-        while (duplicate) {
-          accName = `${resource.name}_${duplicateCount + 1}`;
-          duplicate = Object.keys(acc).find((key) => key == accName);
-          duplicateCount++;
-        }
-
-        this.resourceVersionId.set(resource.uri, version.versionId);
-        this.resourceRealName.set(accName, resource.name);
-        acc.push({
-          name: resource.name,
-          description: resource.description || "",
-          uri: resource.uri,
-          mimeType: resource.mimeType || ""
-        });
-      });
-
-      return acc;
-    }, [] as Resource[]);
-    this.setupHandlers();
-  }
-
-  static async start(id: string, env: Record<string, string>) {
-    const sessionId = crypto.randomUUID();
-    const response = await fetch(`https://proxy.mcplug.com/v1/plug/${id}`, {
-      headers: {
-        Authorization: `Bearer ${env.MC_PLUG_TOKEN}`,
-        "mcp-session-id": sessionId
+      id: "local",
+      token: " DEV",
+      userId: "userId",
+      sessionId: "sessionId",
+      fetch: (url, options) => {
+        return fetch(`http://localhost:${this.port}`, options);
       }
     });
 
-    const plug = (await response.json()) as PlugResponse;
-    const client = new RemoteMCPlugClient(id, env, plug, sessionId);
+    const [availableTools, toolDefinitions] = getToolDefinitions(
+      {
+        id: "local",
+        versions: [
+          {
+            tools: tools as any,
+            versionId: "dev"
+          }
+        ],
+        initializeResult: {} as any
+      },
+      this.env
+    );
 
-    const transport = new StdioServerTransport();
-    await client.server.connect(transport);
-    return client;
-  }
-
-  private onError = (method: string, error: any) => {
-    this.server.sendLoggingMessage({
-      level: "error",
-      data: `${method}: ${error.message}`
-    });
-  };
-
-  private async setupHandlers() {
-    // PROMPTS
-    this.server.setRequestHandler(ListPromptsRequestSchema, () => {
-      return {
-        prompts: this.prompts
-      };
-    });
-
-    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
-      return await this.rpc(
-        request.method,
-        {
-          name: this.promptRealName.get(request.params.name)!,
-          arguments: request.params.arguments || {}
-        },
-        this.promptVersionId.get(request.params.name)!
-      );
-    });
-
-    // RESOURCES
-    this.server.setRequestHandler(ListResourcesRequestSchema, async (request) => {
-      return {
-        resources: this.resources
-      };
-    });
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      return await this.rpc(request.method, request.params, this.resourceVersionId.get(request.params.uri)!);
-    });
-
-    // TOOLS
     this.server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       return {
-        tools: this.toolList
-      } as ListToolsResult;
+        tools: availableTools
+      };
     });
+
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name } = request.params;
-      const versionId = this.toolVersionId.get(name);
-      const constants = this.toolConstants.get(name);
-      const realName = this.toolRealName.get(name);
-      const result = await this.rpc(
-        request.method,
-        {
-          name: realName!,
-          arguments: {
-            ...request.params.arguments,
-            ...constants
-          }
-        },
-        versionId
-      );
-      return result;
+      const toolDefinition = toolDefinitions.get(request.params.name);
+
+      if (!toolDefinition) {
+        return {
+          isError: true,
+          content: ["Tool not found"]
+        };
+      }
+
+      const result = await this.rpc("tools/call", {
+        name: toolDefinition.name,
+        arguments: {
+          ...toolDefinition.constants,
+          ...request.params.arguments
+        }
+      });
+
+      return {
+        isError: !!result.error || result.result.isError,
+        content: result.result.content
+      };
     });
+  }
+
+  static async start(port: string, env: Record<string, string>) {
+    const response = await fetch(`http://localhost:${port}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "tools/list",
+        params: {},
+        id: 1
+      })
+    });
+
+    const {
+      result: { tools }
+    } = (await response.json()) as {
+      jsonrpc: string;
+      id: number;
+      result: ListToolsResult;
+    };
+
+    const client = new LocalMCPlugClient(port, env, tools);
+    const transport = new StdioServerTransport();
+    await client.server.connect(transport);
   }
 }
 
-void RemoteMCPlugClient.start(process.argv[2], process.env as Record<string, string>);
+const env = process.env as Record<string, string>;
+const id = process.argv[2];
 
+program.option("--dev <port>", "Run in dev mode");
+program.parse();
+const devPort = program.opts().dev;
+
+if (devPort) {
+  void LocalMCPlugClient.start(devPort, env).catch((error) => {
+    console.error("Fatal error in main():", error);
+    process.exit(1);
+  });
+} else {
+  if (!id) {
+    console.error("ID is not set");
+    process.exit(1);
+  }
+
+  if (!env.MCPLUG_TOKEN) {
+    console.error("MCPLUG_TOKEN is not set");
+    process.exit(1);
+  }
+
+  void RemoteMCPlugClient.start(id, env).catch((error) => {
+    console.error("Fatal error in main():", error);
+    process.exit(1);
+  });
+}
+//
+//
 export default RemoteMCPlugClient;
+export { RemoteMCPlugClient, LocalMCPlugClient };

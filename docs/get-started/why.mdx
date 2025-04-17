@@ -26,9 +26,21 @@ MCPlug SDK augments the MCP spec with an output schema for tool descriptions. Th
 
 ## Making MCPs More Secure
 
+### Overview of Security Threats
+
+When working with MCPs, several key security threats need to be considered:
+
+- **Tool Poisoning**: Malicious MCPs can hide instructions in tool descriptions that are invisible to users but executed by AI models
+- **Rug Pull Attacks**: MCP servers can change their behavior after gaining trust, introducing harmful functionality
+- **Data Exfiltration**: Sensitive data could be leaked through seemingly innocent tool parameters
+- **Cross-Server Manipulation**: Malicious servers may attempt to influence or compromise other trusted MCPs
+- **Unauthorized Access**: MCPs could try to access sensitive system resources or files without permission
+
+MCPlug implements comprehensive security measures to protect against these threats while maintaining the powerful capabilities of MCPs.
+
 ### Preventing Tool Poisoning Attacks
 
-Security is a critical concern in the MCP ecosystem. Tool Poisoning Attacks (TPAs) represent a significant threat where malicious MCP servers can embed hidden instructions within tool descriptions that are invisible to users but visible to AI models. These attacks can lead to:
+Tool Poisoning Attacks (TPAs) represent a significant threat where malicious MCP servers can embed hidden instructions within tool descriptions that are invisible to users but visible to AI models. These attacks can lead to:
 
 - Unauthorized access to sensitive files (SSH keys, configuration files, databases)
 - Data exfiltration through seemingly innocent tool parameters
@@ -42,9 +54,7 @@ To address these security challenges, MCPlug implements a comprehensive security
 
 {/* - **Community-Driven Security**: Our platform enables community review of implemented tools and reporting of potentially malicious implementations, creating a collaborative security ecosystem. */}
 
-- **Isolated Execution Environment**: All tools are executed in sandboxed environments with strict boundaries, preventing unauthorized access to sensitive system resources and protecting against malicious tool behavior.
-
-- **Cross-Server Protection**: We implement strict boundaries and dataflow controls between different MCP servers, preventing malicious servers from affecting the behavior of trusted ones.
+- **Isolated Execution & Cross-Server Protection**: All tools are executed in sandboxed environments with strict boundaries, preventing unauthorized access to sensitive system resources and protecting against malicious tool behavior. We also implement strict dataflow controls between different MCP servers, preventing malicious servers from affecting the behavior of trusted ones.
 
 This multi-layered security approach ensures you can use MCPs with confidence, knowing that your system and data remain protected against sophisticated attack vectors like tool poisoning.
 
@@ -61,5 +71,3 @@ MCPlug's versioning system provides robust protection against rug pull attacks t
 - **Transparent Version History**: All versions of MCP servers are publicly accessible, allowing you to review the complete history of changes and verify the integrity of each version before adoption.
 
 This approach ensures that you maintain complete control over which versions of MCP servers you use, effectively eliminating the risk of rug pull attacks while maintaining the flexibility to upgrade to newer versions when you choose to do so.
-
-## Making MCPs More Accessible

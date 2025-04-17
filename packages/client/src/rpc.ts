@@ -18,7 +18,6 @@ import {
   InitializeResult,
   EmptyResult
 } from "@mcplug/server";
-import { McplugOptions } from ".";
 
 type Payloads = {
   initialize: InitializeRequest["params"];

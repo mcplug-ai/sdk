@@ -1,0 +1,22 @@
+---
+title: "Cursor or any other AI client"
+description: ""
+icon: "brain"
+---
+
+MCPlug works with any AI client that supports the Vercel AI SDK.
+
+```json
+{
+  "mcpServers": {
+    "mcplug": {
+      "command": "npx",
+      "args": ["-y", "@mcplug/client@latest", "YOUR_PLUG_ID"],
+      "env": {
+        "MCPLUG_TOKEN": "YOUR_MCPLUG_TOKEN"
+        // any other constants needed by the MCP servers you are using
+      }
+    }
+  }
+}
+```

@@ -51,7 +51,7 @@
       "anchors": [
         {
           "anchor": "Community",
-          "href": "https://mintlify.com/community",
+          "href": "https://discord.gg/dfrf2xmvEu",
           "icon": "slack"
         },
         {
@@ -70,19 +70,18 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mcplug.ai"
+        "href": "https://discord.gg/dfrf2xmvEu"
+      },
+      {
+        "label": "Browser servers",
+        "href": "https://mcplug.ai/browse"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://mcplug.ai/dashboard"
-    }
+    ]
   },
   "footer": {
     "socials": {
       "x": "https://x.com/mcplug",
-      "github": "https://github.com/mcplug"
+      "github": "https://github.com/mcplug-ai"
     }
   }
 }

@@ -15,7 +15,8 @@ When initializing the mcplug client, provide constants as part of the configurat
 ```ts
 import { mcplug } from "@mcplug/client";
 
-const tools = await mcplug(MCPLUG_TOKEN, {
+const tools = await mcplug({
+  token: MCPLUG_TOKEN,
   id: "plug_id",
   constants: {
     WEATHER_API_KEY: "your-api-key-here",
@@ -38,7 +39,8 @@ Consider a weather MCP server requiring a paid API key to fetch weather data for
 2. You provide the API key during client initialization
 
 ```ts
-const tools = await mcplug(MCPLUG_TOKEN, {
+const tools = await mcplug({
+  token: MCPLUG_TOKEN,
   id: "plug_id",
   constants: { WEATHER_API_KEY: "your-api-key-here" }
 });
@@ -62,7 +64,8 @@ For Gmail tool integration:
 Once you have the required credentials, pass them to the client as constants:
 
 ```ts
-const tools = await mcplug(MCPLUG_TOKEN, {
+const tools = await mcplug({
+  token: MCPLUG_TOKEN,
   id: "plug_id",
   constants: {
     GMAIL_CLIENT_ID: "your-client-id-here",

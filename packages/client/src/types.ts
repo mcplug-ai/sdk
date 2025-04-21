@@ -19,6 +19,7 @@ export type ServerVersion = {
 export type PlugResponse = {
   id: string;
   initializeResult: InitializeResult;
+  constants: Record<string, string>;
   versions: {
     versionId: string;
     tools: Tool[];

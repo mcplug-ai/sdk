@@ -67,13 +67,13 @@ class McpPlug {
         }
 
         const { constantsParams, aiParameters } = extractToolParams(tool);
-
+        const constants = { ...constantsParams, ...this.constants };
         const hasConstantsSet = Object.keys(constantsParams)
           .filter((key) => tool.inputSchema.required?.some((required) => required.replace("_", "") === key))
-          .every((key) => this.constants[key]);
+          .every((key) => constants[key]);
 
         const toolConstants = Object.keys(constantsParams).reduce((acc, key) => {
-          Object.assign(acc, { [`_${key}`]: this.constants[key] });
+          Object.assign(acc, { [`_${key}`]: constants[key] });
           return acc;
         }, {} as Record<string, string>);
 

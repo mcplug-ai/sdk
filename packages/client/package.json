@@ -1,7 +1,7 @@
 {
   "name": "@mcplug/client",
   "private": false,
-  "version": "1.0.56",
+  "version": "1.0.62",
   "description": "Server for mcplug",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,11 +26,13 @@
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
     "esm-env": "^1.2.2",
+    "jwt-decode": "^4.0.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.14",
     "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
     "vite": "^6.2.3",
     "vitest": "~3.0.9"
   },

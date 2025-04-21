@@ -55,8 +55,10 @@ export type ToolDefinition = {
 
 export const getToolDefinitions = (
   plug: PlugResponse,
-  constants: Record<string, string>
+  envConstants: Record<string, string>
 ): [ListToolsResult["tools"], Map<string, ToolDefinition>] => {
+  const constants = { ...plug.constants, ...envConstants };
+
   const toolDefinitions = new Map<string, ToolDefinition>();
 
   const availableTools: ListToolsResult["tools"] = plug.versions.reduce((acc, version) => {

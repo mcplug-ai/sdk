@@ -139,7 +139,7 @@ export const defineTool = <O extends true | undefined>(
 };
 
 export class ToolError {
-  constructor(private message?: string) {}
+  constructor(public message?: string) {}
   get result() {
     return {
       content: [

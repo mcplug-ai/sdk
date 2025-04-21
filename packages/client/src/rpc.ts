@@ -58,17 +58,34 @@ export const rpc =
   ({
     id,
     token,
-    userId,
-    sessionId,
+    userId = undefined,
+    sessionId = undefined,
     fetch: _fetch = fetch
   }: {
     id: string;
     token: string;
-    userId: string;
-    sessionId: string;
+    userId?: string | null | undefined;
+    sessionId?: string | null | undefined;
     fetch?: typeof fetch;
   }) =>
   async <M extends keyof Payloads>(method: M, body: Payloads[M], versionId?: string): Promise<Results[M]> => {
+    const headers = {
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+      "cache-tag": "no-cache",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
+    if (userId) {
+      Object.assign(headers, {
+        "mcp-user-id": userId
+      });
+    }
+    if (sessionId) {
+      Object.assign(headers, {
+        "mcp-session-id": sessionId
+      });
+    }
     const response = await _fetch(`https://proxy.mcplug.ai/v1/plug/${id}${versionId ? `/${versionId}` : ""}`, {
       method: "POST",
       body: JSON.stringify({
@@ -77,15 +94,7 @@ export const rpc =
         method,
         params: body
       }),
-      headers: {
-        "cache-control": "no-cache",
-        pragma: "no-cache",
-        "cache-tag": "no-cache",
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "mcp-user-id": userId,
-        "mcp-session-id": sessionId
-      }
+      headers
     });
 
     const result = await response.json();

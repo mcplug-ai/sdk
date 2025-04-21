@@ -5,9 +5,9 @@ import { definePrompts } from "./prompts";
 import { defineResources } from "./resources";
 import { defineTools } from "./tools";
 import { MCPServer } from "./types";
-export { tool } from "./tools";
-export { prompt } from "./prompts";
-export { resource } from "./resources";
+export { tool, defineTools } from "./tools";
+export { prompt, definePrompts } from "./prompts";
+export { resource, defineResources } from "./resources";
 export * from "./mcp/spec";
 export { type Register, type CreateCtx } from "./types";
 

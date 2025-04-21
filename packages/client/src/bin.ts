@@ -6,6 +6,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, ListToolsResult } from "
 import { rpc } from "./rpc";
 import { PlugResponse } from "./types";
 import { getToolDefinitions, ToolDefinition } from "./utils";
+import { jwtDecode } from "jwt-decode";
 
 class RemoteMCPlugClient {
   public readonly server: Server;
@@ -25,12 +26,13 @@ class RemoteMCPlugClient {
         }
       }
     );
+    const decoded = jwtDecode<{ accountId: string }>(this.env.MCPLUG_TOKEN);
 
     this.rpc = rpc({
       id: this.id,
       token: this.env.MCPLUG_TOKEN,
-      userId: "userId",
-      sessionId: "sessionId"
+      userId: decoded?.accountId,
+      sessionId: this.server.transport?.sessionId
     });
 
     const [availableTools, toolDefinitions] = getToolDefinitions(this.plug, this.env);
@@ -47,7 +49,7 @@ class RemoteMCPlugClient {
         tools: this.availableTools
       };
     });
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       const toolDefinition = this.toolDefinitions.get(request.params.name);
 
       if (!toolDefinition) {
@@ -87,6 +89,7 @@ class RemoteMCPlugClient {
     const client = new RemoteMCPlugClient(id, env, plug);
 
     const transport = new StdioServerTransport();
+
     await client.server.connect(transport);
   }
 }
@@ -114,7 +117,7 @@ class LocalMCPlugClient {
       id: "local",
       token: " DEV",
       userId: "userId",
-      sessionId: "sessionId",
+      sessionId: this.server.transport?.sessionId,
       fetch: (url, options) => {
         return fetch(`http://localhost:${this.port}`, options);
       }
@@ -129,7 +132,8 @@ class LocalMCPlugClient {
             versionId: "dev"
           }
         ],
-        initializeResult: {} as any
+        initializeResult: {} as any,
+        constants: {}
       },
       this.env
     );
@@ -195,12 +199,12 @@ class LocalMCPlugClient {
 
 const env = process.env as Record<string, string>;
 const id = process.argv[2];
+const isDev = process.argv.includes("--dev");
 
-program.option("--dev <port>", "Run in dev mode");
-program.parse();
-const devPort = program.opts().dev;
-
-if (devPort) {
+if (isDev) {
+  program.option("--dev <port>", "Run in dev mode");
+  program.parse();
+  const devPort = program.opts().dev;
   void LocalMCPlugClient.start(devPort, env).catch((error) => {
     console.error("Fatal error in main():", error);
     process.exit(1);

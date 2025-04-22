@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/bin.ts", "src/remotemcp/bin.ts"],
+  entry: ["src/ai/index.ts", "src/bin.ts"],
   splitting: true,
   skipNodeModulesBundle: true,
   dts: true,

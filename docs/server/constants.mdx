@@ -41,9 +41,9 @@ In this example, the `_WEATHER_API_KEY` is a constant that will be provided by t
 
 ## How constants are passed to the tool
 
-Constants are passed to the tool when the developer initializes the `mcplug` client.
+Constants are passed to the tool when the developer initializes the `mcplug` client or by setting them in the plug dashboard.
 
-```ts
+```ts In the code
 import { mcplug } from "@mcplug/client";
 
 const tools = await mcplug({
@@ -53,5 +53,19 @@ const tools = await mcplug({
     WEATHER_API_KEY: "1234567890"
   }
 });
-// ... rest of the code
+```
+
+```ts With a MCP host
+{
+  "mcpServers": {
+    "mcplug": {
+      "command": "npx",
+      "args": ["-y", "@mcplug/client@latest", "YOUR_PLUG_ID"],
+      "env": {
+        "MCPLUG_TOKEN": "YOUR_MCPLUG_TOKEN",
+        "WEATHER_API_KEY": "1234567890"
+      }
+    }
+  }
+}
 ```

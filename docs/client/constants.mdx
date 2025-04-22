@@ -4,9 +4,16 @@ description: "Using constants in the MCPlug client"
 icon: "key"
 ---
 
-# Constants
+Constants provide a secure method for passing sensitive values to MCP servers. These include API keys, authentication tokens, and configuration parameters that should remain hidden from the LLM and necessary for the MCP server to function.
 
-Constants provide a secure method for passing sensitive values to MCP servers. These include API keys, authentication tokens, and configuration parameters that should remain hidden from the LLM.
+<Note>If a tool requires a constant that is not configured, the tool will not be available to the LLM.</Note>
+
+There is two ways of settings constant within a plug:
+
+- **In the dashboard**: In the "Constants" tabs, this will set some sort of default values for the plug.
+- **In the client**: When initializing the mcplug client, provide constants as part of the configuration. Provided constants will override the ones in the dashboard.
+
+When using MCPlug inside a MCP host like Cursor or Claude. You can still set default values for the constants in the "Constants" tab of the MCP host but you can override them by passing constants in the "env" property.
 
 ## Passing Constants to the Client
 

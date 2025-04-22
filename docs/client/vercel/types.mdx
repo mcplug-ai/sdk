@@ -1,0 +1,45 @@
+---
+title: "Types"
+description: "Type safe tool use with generated types"
+icon: "Font"
+---
+
+You can generate types for the plug tools by using the cli.
+
+```bash
+npx mcplug types <PLUG_ID>
+```
+
+This will generate a `<PLUG_NAME>.d.ts` file in the src or root directory of your project.
+
+You can then use the type in your code by passing it as generic of the `mcplug` function.
+
+```ts
+const tools = await mcplug<MCPLUG_YOUR_PLUG_NAME>({
+  token: PLUG_TOKEN,
+  id: PLUG_ID
+});
+
+const result = await generateText({
+  model: openai("gpt-4o"),
+  messages: [
+    {
+      role: "user",
+      content: "What is the weather in Paris?"
+    }
+  ],
+  // Necessary to let the LLM use the tools in a loop if needed and generate a response
+  maxSteps: 10,
+  tools
+});
+```
+
+After that, the `toolCalls` or `toolResults` properties of the `result` will be typed and you will be able to use them safely in your code.
+
+### Specifying the folder
+
+You can specify the folder of the generated types by using the `--folder` flag.
+
+```bash
+npx mcplug types <PLUG_ID> --output src/types
+```

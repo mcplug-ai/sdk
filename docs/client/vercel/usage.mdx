@@ -1,0 +1,56 @@
+---
+title: "Usage"
+description: "Use of the MCPlug client with Vercel AI SDK"
+icon: "notebook"
+---
+
+### Installation
+
+The mcplug client is a npm package that you can install in your application.
+
+```bash
+npm install @mcplug/client
+```
+
+### Example
+
+```ts
+import { mcplug } from "@mcplug/client/ai";
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
+
+const tools = await mcplug({
+  token: PLUG_TOKEN,
+  id: PLUG_ID
+});
+
+const result = await generateText({
+  model: openai("gpt-4o"),
+  messages: [
+    {
+      role: "user",
+      content: "What is the weather in Paris?"
+    }
+  ],
+  // Necessary to let the LLM use the tools in a loop if needed and generate a response
+  maxSteps: 10,
+  tools
+});
+```
+
+### Using constants
+
+To use constants, you need to pass them in the `constants` property of the `mcplug` function.
+
+You do not need to pass the constants if you have already defined them inside your plug dashboard.
+
+```ts
+const tools = await mcplug({
+  token: PLUG_TOKEN,
+  id: PLUG_ID,
+  constants: {
+    WEATHER_API_KEY: "your-api-key-here",
+    AUTH_TOKEN: "your-auth-token"
+  }
+});
+```

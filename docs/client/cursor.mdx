@@ -1,10 +1,17 @@
 ---
-title: "Cursor or any other AI client"
+title: "Cursor"
 description: ""
 icon: "brain"
 ---
 
-MCPlug works with any AI client that supports the Vercel AI SDK.
+<Card title="Global configuration" icon="globe" horizontal>
+  For tools that you want to use across all projects, create a \~/.cursor/mcp.json file in your home directory. This
+  makes MCP servers available in all your Cursor workspaces.
+</Card>
+<Card title="Project configuration" icon="folder-tree" horizontal>
+  For tools specific to a project, create a .cursor/mcp.json file in your project directory. This allows you to define
+  MCP servers that are only available within that specific project.
+</Card>
 
 ```json
 {

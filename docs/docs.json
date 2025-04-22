@@ -38,11 +38,15 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["client/introduction", "client/prerequisites", "client/constants"]
+            "pages": ["client/prerequisites", "client/constants"]
           },
           {
-            "group": "Integrations",
-            "pages": ["client/vercel-ai-sdk", "client/cursor"]
+            "group": "Vercel AI SDK",
+            "pages": ["client/vercel/usage", "client/vercel/types"]
+          },
+          {
+            "group": "MCP hosts",
+            "pages": ["client/cursor"]
           }
         ]
       }

@@ -1,7 +1,7 @@
 {
   "name": "@mcplug/client",
   "private": false,
-  "version": "1.0.62",
+  "version": "1.0.69",
   "description": "Server for mcplug",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsup && chmod 755 dist/bin.js",
     "build-dev": "tsup --watch",
+    "pub": "npm run build && npx -y verinc && npm publish",
     "test": "vitest --ui"
   },
   "dependencies": {
@@ -41,20 +42,10 @@
     "README.md"
   ],
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.js"
-    },
-    "./bin": {
-      "types": "./dist/bin.d.ts",
-      "require": "./dist/bin.js",
-      "import": "./dist/bin.js"
-    },
-    "./mcplugclient": {
-      "types": "./dist/bin.d.ts",
-      "require": "./dist/bin.js",
-      "import": "./dist/bin.js"
+    "./ai": {
+      "types": "./dist/ai/index.d.ts",
+      "require": "./dist/ai/index.js",
+      "import": "./dist/ai/index.js"
     }
   },
   "typeVersion": {

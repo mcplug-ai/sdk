@@ -1,6 +1,7 @@
-import { Tool } from "@mcplug/server/mcp";
+import { PlugDefinition, ToolDefinition } from "./types";
 import { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
-import { PlugResponse } from "./types";
+
+type Tool = ListToolsResult["tools"][number];
 
 export const extractToolParams = (tool: Tool) => {
   const { constantsParams, aiParameters } = Object.entries(tool.inputSchema.properties ?? {}).reduce(
@@ -31,11 +32,11 @@ export const extractToolProperties = (tool: Tool, constants: Record<string, stri
     { constantsProperties: [] as string[], aiProperties: {} as Record<string, object> }
   );
 
-  const requiredConstants = tool.inputSchema.required?.filter((required) =>
-    constantsProperties.includes(required.replace("_", ""))
-  );
+  const requiredConstants = (tool.inputSchema.required as string[])
+    ?.filter((required) => constantsProperties.includes(required.replace("_", "")))
+    .map((required) => required.replace("_", ""));
 
-  const areConstantsSet = requiredConstants?.every((required) => constants[required.replace("_", "")]);
+  const areConstantsSet = requiredConstants?.every((required) => constants[required]);
 
   const constantsValues = constantsProperties.reduce((acc, key) => {
     Object.assign(acc, { [`_${key}`]: constants[key] });
@@ -45,53 +46,49 @@ export const extractToolProperties = (tool: Tool, constants: Record<string, stri
   return { constantsProperties, aiProperties, areConstantsSet, constantsValues };
 };
 
-export type ToolDefinition = {
-  versionId: string;
-  name: string;
-  description: string | undefined;
-  inputSchema: any;
-  constants: Record<string, string>;
-};
-
 export const getToolDefinitions = (
-  plug: PlugResponse,
-  envConstants: Record<string, string>
-): [ListToolsResult["tools"], Map<string, ToolDefinition>] => {
-  const constants = { ...plug.constants, ...envConstants };
+  tools: ListToolsResult["tools"],
+  constants: Record<string, string>
+): [ListToolsResult["tools"], Map<string, Record<string, string>>] => {
+  const toolConstants = new Map<string, Record<string, string>>();
+  const availableTools = tools.reduce((acc, tool) => {
+    const { aiProperties, areConstantsSet, constantsValues } = extractToolProperties(tool, constants);
 
-  const toolDefinitions = new Map<string, ToolDefinition>();
-
-  const availableTools: ListToolsResult["tools"] = plug.versions.reduce((acc, version) => {
-    version.tools.forEach((tool) => {
-      const { aiProperties, areConstantsSet, constantsValues } = extractToolProperties(tool, constants);
-
-      if (areConstantsSet) {
-        let accName = tool.name;
-        let increment = 1;
-
-        while (toolDefinitions.has(accName)) {
-          accName = `${tool.name}_${increment}`;
-          increment++;
+    if (areConstantsSet) {
+      toolConstants.set(tool.name, constantsValues);
+      acc.push({
+        name: tool.name,
+        description: tool.description!,
+        inputSchema: {
+          type: "object",
+          properties: aiProperties
         }
-        toolDefinitions.set(accName, {
-          constants: constantsValues,
-          description: tool.description,
-          inputSchema: aiProperties,
-          name: tool.name,
-          versionId: version.versionId
-        });
-        acc.push({
-          name: accName,
-          description: tool.description!,
-          inputSchema: {
-            type: "object",
-            properties: aiProperties
-          }
-        });
-      }
-    });
+      });
+    }
+
     return acc;
   }, [] as ListToolsResult["tools"]);
 
-  return [availableTools, toolDefinitions];
+  return [availableTools, toolConstants];
+};
+
+export const getToolList = (plug: PlugDefinition, env: Record<string, string>): ListToolsResult["tools"] => {
+  const { availableTools, notAvailableTools } = plug;
+
+  const allTools = availableTools.concat(
+    notAvailableTools
+      .filter((tool) => tool.if.every((ifCondition) => env[ifCondition]))
+      .map((tool) => ({ name: tool.name } as (typeof availableTools)[number]))
+  );
+
+  return allTools.reduce((acc, tool) => {
+    const definition = plug.toolDefinitions[tool.name];
+    acc.push({
+      name: tool.name,
+      description: definition.description,
+      inputSchema: definition.inputSchema
+    });
+
+    return acc;
+  }, [] as ListToolsResult["tools"]);
 };

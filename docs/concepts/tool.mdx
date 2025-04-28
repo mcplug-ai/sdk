@@ -38,10 +38,10 @@ export const myTool = tool(
       age: z.number().describe("The age of the person")
     })
   )
-  .handle(async ({ input, userId, sessionId, error }) => {
+  .handle(async ({ input, sessionId, error }) => {
     const result = await fetch("https://api.example.com/data", {
       method: "POST",
-      body: JSON.stringify({ input, userId, sessionId })
+      body: JSON.stringify({ input, sessionId })
     });
 
     return {
@@ -72,7 +72,6 @@ It receives the following parameters:
 
 - `input`: The data passed to the tool whose type is inferred from the input schema.
 - `error`: A function to return errors
-- `userId`: The ID of the user executing the tool (optional)
 - `sessionId`: The ID of the current session
 - `ctx`: The context of the tool execution that you can create using the `createCtx` function.
 - `env`: The environment variables of your MCP server. As defined in the `.env` file of your project.
@@ -80,8 +79,6 @@ It receives the following parameters:
 You can return an error to the LLM using the error function, which will build a standard RPC error.
 
 The `sessionId` identifies the current execution session and can be used to store associated data.
-
-The `userId` provides context about the user, though it's not mandatory.
 
 <Note>
   The handle function can return either a string or an object. You don't need to manually format the return value

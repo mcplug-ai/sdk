@@ -1,0 +1,27 @@
+{
+  "name": "test-server",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "publish": "npx mcplug publish",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "vitest": "latest",
+    "@vitest/ui": "latest",
+    "vite": "latest",
+    "wrangler": "latest",
+    "@mcplug/vite": "latest",
+    "cloudflare": "latest",
+    "@cloudflare/vite-plugin": "latest"
+  },
+  "dependencies": {
+    "@mcplug/server": "workspace:*",
+    "zod": "^3.24.2"
+  }
+}

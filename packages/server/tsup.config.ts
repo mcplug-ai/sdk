@@ -12,7 +12,7 @@ export default defineConfig({
   platform: "node",
   external: ["cloudflare:workers"],
   keepNames: true,
-  minify: true,
+  // minify: true,
   sourcemap: true,
   format: ["cjs", "esm"],
   treeshake: true,

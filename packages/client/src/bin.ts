@@ -4,17 +4,15 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import { rpc } from "./rpc";
-import { PlugResponse } from "./types";
-import { getToolDefinitions, ToolDefinition } from "./utils";
-import { jwtDecode } from "jwt-decode";
+import { PlugDefinition } from "./types";
+import { getToolDefinitions, getToolList } from "./utils";
 
 class RemoteMCPlugClient {
   public readonly server: Server;
   rpc: ReturnType<typeof rpc>;
-  toolDefinitions: Map<string, ToolDefinition>;
   availableTools: ListToolsResult["tools"];
 
-  constructor(private readonly id: string, private readonly env: Record<string, string>, private plug: PlugResponse) {
+  constructor(private readonly id: string, private readonly env: Record<string, string>, private plug: PlugDefinition) {
     this.server = new Server(
       {
         name: "MCPlug Client",
@@ -26,19 +24,14 @@ class RemoteMCPlugClient {
         }
       }
     );
-    const decoded = jwtDecode<{ accountId: string }>(this.env.MCPLUG_TOKEN);
 
     this.rpc = rpc({
       id: this.id,
       token: this.env.MCPLUG_TOKEN,
-      userId: decoded?.accountId,
       sessionId: this.server.transport?.sessionId
     });
 
-    const [availableTools, toolDefinitions] = getToolDefinitions(this.plug, this.env);
-
-    this.availableTools = availableTools;
-    this.toolDefinitions = toolDefinitions;
+    this.availableTools = getToolList(this.plug, this.env);
 
     this.setupHandlers();
   }
@@ -50,8 +43,7 @@ class RemoteMCPlugClient {
       };
     });
     this.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-      const toolDefinition = this.toolDefinitions.get(request.params.name);
-
+      const toolDefinition = this.plug.toolDefinitions[request.params.name];
       if (!toolDefinition) {
         return {
           isError: true,
@@ -59,17 +51,20 @@ class RemoteMCPlugClient {
         };
       }
 
-      const result = await this.rpc(
-        "tools/call",
-        {
-          name: toolDefinition.name,
-          arguments: {
-            ...toolDefinition.constants,
-            ...request.params.arguments
-          }
-        },
-        toolDefinition.versionId
-      );
+      const envConstants = toolDefinition.constantsProperties.reduce((acc, key) => {
+        if (this.env[key]) {
+          Object.assign(acc, { [`_${key}`]: this.env[key] });
+        }
+        return acc;
+      }, {} as Record<string, string>);
+
+      const result = await this.rpc("tools/call", {
+        name: request.params.name,
+        arguments: {
+          ...envConstants,
+          ...request.params.arguments
+        }
+      });
 
       return {
         isError: !!result.error || result.result.isError,
@@ -77,14 +72,17 @@ class RemoteMCPlugClient {
       };
     });
   }
-  static async start(id: string, env: Record<string, string>, devPort?: string) {
-    const response = await fetch(`https://proxy.mcplug.ai/v1/plug/${id}`, {
+
+  static async start(id: string, env: Record<string, string>) {
+    const response = await fetch(`https://proxy.mcplug.ai`, {
       headers: {
-        Authorization: `Bearer ${env.MCPLUG_TOKEN}`
+        Authorization: `Bearer ${env.MCPLUG_TOKEN}`,
+        "x-mcplug-client": "stdio",
+        "x-mcplug-id": id
       }
     });
 
-    const plug = (await response.json()) as PlugResponse;
+    const plug = (await response.json()) as PlugDefinition;
 
     const client = new RemoteMCPlugClient(id, env, plug);
 
@@ -115,28 +113,14 @@ class LocalMCPlugClient {
     );
     this.rpc = rpc({
       id: "local",
-      token: " DEV",
-      userId: "userId",
+      token: "DEV",
       sessionId: this.server.transport?.sessionId,
       fetch: (url, options) => {
         return fetch(`http://localhost:${this.port}`, options);
       }
     });
 
-    const [availableTools, toolDefinitions] = getToolDefinitions(
-      {
-        id: "local",
-        versions: [
-          {
-            tools: tools as any,
-            versionId: "dev"
-          }
-        ],
-        initializeResult: {} as any,
-        constants: {}
-      },
-      this.env
-    );
+    const [availableTools, toolConstants] = getToolDefinitions(tools, this.env);
 
     this.server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       return {
@@ -145,19 +129,12 @@ class LocalMCPlugClient {
     });
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const toolDefinition = toolDefinitions.get(request.params.name);
-
-      if (!toolDefinition) {
-        return {
-          isError: true,
-          content: ["Tool not found"]
-        };
-      }
+      const constants = toolConstants.get(request.params.name) || {};
 
       const result = await this.rpc("tools/call", {
-        name: toolDefinition.name,
+        name: request.params.name,
         arguments: {
-          ...toolDefinition.constants,
+          ...constants,
           ...request.params.arguments
         }
       });

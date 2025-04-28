@@ -97,13 +97,7 @@ export class MCPHandler {
   private hasResources: boolean;
   private hasPrompts: boolean;
 
-  constructor(
-    server: MCPServer,
-    private sessionId: string,
-    private userId: string,
-    private env: ENV,
-    private ctx: CTX
-  ) {
+  constructor(server: MCPServer, private sessionId: string, private env: ENV, private ctx: CTX) {
     this.server = server;
     const { tools, resources, prompts } = server;
     this.hasTools = !!tools && Object.keys(tools).length > 0;
@@ -119,7 +113,8 @@ export class MCPHandler {
             name: this.server.name,
             version: this.server.version
           },
-          protocolVersion: "2025-03-26",
+          protocolVersion: "2024-11-05",
+          // protocolVersion: "2025-03-26",
           capabilities: {}
         };
 
@@ -157,7 +152,7 @@ export class MCPHandler {
           if (!(await prompt["~validate"](payload.arguments))) {
             return mcpError("INVALID_PARAMS");
           }
-          const result = await prompt["~call"](payload.arguments, this.sessionId, this.userId, this.ctx);
+          const result = await prompt["~call"](payload.arguments, this.sessionId, this.ctx);
           if (result instanceof MCPError) {
             return result;
           }
@@ -206,7 +201,7 @@ export class MCPHandler {
             return mcpError("RESOURCE_NOT_FOUND");
           }
 
-          const [result, type] = await resource["~call"](payload.uri, this.sessionId, this.userId, this.ctx);
+          const [result, type] = await resource["~call"](payload.uri, this.sessionId, this.ctx);
 
           if (result instanceof MCPError) {
             return result;
@@ -247,7 +242,7 @@ export class MCPHandler {
             return mcpError("INVALID_PARAMS");
           }
 
-          const result = await tool["~call"](payload.arguments, this.sessionId, this.userId, this.ctx, this.env);
+          const result = await tool["~call"](payload.arguments, this.sessionId, this.ctx, this.env);
 
           if (result instanceof MCPError) {
             return result;

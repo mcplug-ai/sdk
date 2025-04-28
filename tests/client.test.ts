@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { rpc } from "./fixtures/server";
-import { mcplug } from "@mcplug/client";
+
+import { mcplug } from "@mcplug/client/ai";
 import { proxy } from "./fixtures/proxy";
 
 describe("Client", () => {
@@ -10,7 +10,7 @@ describe("Client", () => {
       id: "plug1",
       constants: {},
       sessionId: "session1",
-      userId: "user1",
+
       fetch: async (url, init) => {
         const request = new Request(url, init);
         return proxy.fetch(request);
@@ -32,7 +32,6 @@ describe("Client", () => {
         GOOGLE_API_KEY: "1234567890"
       },
       sessionId: "session1",
-      userId: "user1",
       fetch: async (url, init) => {
         const request = new Request(url, init);
         return proxy.fetch(request);
@@ -55,7 +54,7 @@ describe("Client", () => {
         GOOGLE_API_KEY: "1234567890"
       },
       sessionId: "session1",
-      userId: "user1",
+
       fetch: async (url, init) => {
         const request = new Request(url, init);
         return proxy.fetch(request);

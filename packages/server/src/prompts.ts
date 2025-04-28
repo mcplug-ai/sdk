@@ -8,7 +8,6 @@ export type PromptPayload<Schema extends StandardSchemaV1 | undefined> = WithCtx
   OmitNever<{
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : never;
     sessionId: string;
-    userId: string;
     error: typeof error;
   }>
 >;
@@ -32,10 +31,10 @@ export class Prompt<Schema extends StandardSchemaV1 | undefined, H extends Handl
   "~call" = (
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
     sessionId: string,
-    userId: string,
+
     ctx?: CTX
   ) => {
-    return this["~handler"]({ input, sessionId, userId, error, ctx } as PromptPayload<Schema>);
+    return this["~handler"]({ input, sessionId, error, ctx } as PromptPayload<Schema>);
   };
 
   "~validate" = async (input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined) => {

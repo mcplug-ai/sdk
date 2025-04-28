@@ -1,7 +1,7 @@
 {
   "name": "@mcplug/client",
   "private": false,
-  "version": "1.0.69",
+  "version": "1.0.76",
   "description": "Server for mcplug",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,5 +1,4 @@
 import { createMCP, resource } from "@mcplug/server";
-import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { z } from "zod";
 import {
   ClientRequest,

@@ -1,5 +1,5 @@
 import { ToolSet, jsonSchema } from "ai";
-import { PlugResponse } from "../types";
+import { PlugDefinition, PlugResponse } from "../types";
 import { rpc } from "../rpc";
 import { extractToolParams } from "../utils";
 export * from "../utils";
@@ -24,7 +24,6 @@ export type McplugOptions = {
   id: string;
   constants?: Record<string, string>;
   sessionId?: string;
-  userId?: string;
   fetch?: typeof fetch;
 };
 
@@ -36,12 +35,11 @@ class McpPlug<TOOLSET extends ToolSet> {
     private readonly token: string,
     private readonly id: string,
     private readonly constants: Record<string, string>,
-    private plugResponse: PlugResponse,
+    private plugDefinition: PlugDefinition,
     private sessionId: string | undefined,
-    private userId: string | undefined,
     _fetch?: McplugOptions["fetch"]
   ) {
-    this.tools = this.createToolSetHandler(this.plugResponse);
+    this.tools = this.createToolSetHandler(this.plugDefinition);
     if (_fetch) {
       this.fetch = _fetch;
     }
@@ -49,47 +47,33 @@ class McpPlug<TOOLSET extends ToolSet> {
     this.rpc = rpc({
       id: this.id,
       token: this.token,
-      userId: this.userId,
       sessionId: this.sessionId,
       fetch: this.fetch
     });
   }
 
-  private createToolSetHandler = (plug: PlugResponse): TOOLSET => {
-    return plug.versions.reduce((acc, { tools, versionId }) => {
-      tools.forEach((tool) => {
-        let accName = tool.name;
-        let duplicate = Object.keys(acc).find((key) => key == accName);
-        let duplicateCount = 0;
+  private createToolSetHandler = (plug: PlugDefinition): TOOLSET => {
+    const { availableTools, notAvailableTools } = plug;
 
-        while (duplicate) {
-          accName = `${tool.name}_${duplicateCount + 1}`;
-          duplicate = Object.keys(acc).find((key) => key == accName);
-          duplicateCount++;
-        }
+    const allTools = availableTools.concat(
+      notAvailableTools
+        .filter((tool) => tool.if.every((ifCondition) => this.constants[ifCondition]))
+        .map((tool) => ({ name: tool.name } as (typeof availableTools)[number]))
+    );
 
-        const { constantsParams, aiParameters } = extractToolParams(tool);
-        const constants = { ...constantsParams, ...this.constants };
-        const hasConstantsSet = Object.keys(constantsParams)
-          .filter((key) => tool.inputSchema.required?.some((required) => required.replace("_", "") === key))
-          .every((key) => constants[key]);
+    return allTools.reduce((acc, tool) => {
+      const definition = this.plugDefinition.toolDefinitions[tool.name];
 
-        const toolConstants = Object.keys(constantsParams).reduce((acc, key) => {
-          Object.assign(acc, { [`_${key}`]: constants[key] });
-          return acc;
-        }, {} as Record<string, string>);
+      const toolConstants = definition.constantsProperties.reduce((acc, key) => {
+        Object.assign(acc, { [`_${key}`]: this.constants[key] });
+        return acc;
+      }, {} as Record<string, string>);
 
-        if (hasConstantsSet) {
-          Object.assign(acc, {
-            [accName]: {
-              description: tool.description,
-              parameters: jsonSchema({
-                type: "object",
-                properties: aiParameters
-              }),
-              execute: this.executeTool(versionId, tool.name, toolConstants)
-            }
-          });
+      Object.assign(acc, {
+        [tool.name]: {
+          description: tool.description,
+          parameters: jsonSchema(tool.inputSchema),
+          execute: this.executeTool(tool.name, toolConstants)
         }
       });
 
@@ -97,38 +81,39 @@ class McpPlug<TOOLSET extends ToolSet> {
     }, {} as TOOLSET);
   };
 
-  private executeTool =
-    (versionId: string, toolName: string, constants?: Record<string, string>) => async (args: any) => {
-      const data = await this.rpc(
-        "tools/call",
-        {
-          name: toolName,
-          arguments: { ...args, ...constants }
-        },
-        versionId
-      );
-      if (!data.result) {
-        return null;
-      }
+  private executeTool = (toolName: string, constants?: Record<string, string>) => async (args: any) => {
+    console.log({ constants });
+    const data = await this.rpc("tools/call", {
+      name: toolName,
+      arguments: { ...args, ...constants }
+    });
+    if (!data.result) {
+      return null;
+    }
 
-      const results = data.result.content.map((part) => {
-        if (part.type === "text") {
-          return {
-            ...part,
-            text: tryParse(part.text)
-          };
-        }
-        return part;
-      });
-      if (results.length === 0) {
-        return null;
+    const results = data.result.content.map((part) => {
+      if (part.type === "text") {
+        return {
+          ...part,
+          text: tryParse(part.text)
+        };
       }
-      if (results.length === 1) {
-        return results[0];
-      }
+      return part;
+    });
 
-      return results;
-    };
+    console.log(results);
+    if (results.length === 0) {
+      return null;
+    }
+    if (results.length === 1) {
+      if (results[0].type === "text") {
+        return results[0].text;
+      }
+      return results[0];
+    }
+
+    return results;
+  };
 }
 
 export const mcplug = async <TOOLSET extends ToolSet = ToolSet>({
@@ -136,12 +121,13 @@ export const mcplug = async <TOOLSET extends ToolSet = ToolSet>({
   id,
   constants,
   sessionId,
-  userId,
   fetch: _fetch = fetch
 }: McplugOptions): Promise<TOOLSET> => {
   try {
     const headers = {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      "x-mcplug-client": "ai",
+      "x-mcplug-id": id
     };
 
     if (sessionId) {
@@ -149,12 +135,7 @@ export const mcplug = async <TOOLSET extends ToolSet = ToolSet>({
         "mcp-session-id": sessionId
       });
     }
-    if (userId) {
-      Object.assign(headers, {
-        "mcp-user-id": userId
-      });
-    }
-    const response = await _fetch(`${BASE_URL}/v1/plug/${id}`, {
+    const response = await _fetch(`${BASE_URL}`, {
       method: "GET",
       headers
     });
@@ -163,8 +144,9 @@ export const mcplug = async <TOOLSET extends ToolSet = ToolSet>({
       const errorText = await response.text();
       throw new Error(`Server responded with status ${response.status}: ${errorText}`);
     }
-    const plugResponse = (await response.json()) as PlugResponse;
-    const plug = new McpPlug(token, id, constants || {}, plugResponse, sessionId, userId, _fetch);
+    const plugDefinition = (await response.json()) as PlugDefinition;
+
+    const plug = new McpPlug(token, id, constants || {}, plugDefinition, sessionId, _fetch);
     return plug.tools as TOOLSET;
   } catch (error) {
     console.error("Error in mcplug:", error);

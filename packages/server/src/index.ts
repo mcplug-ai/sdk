@@ -14,23 +14,25 @@ export { type Register, type CreateCtx } from "./types";
 export const createMCP = (server: MCPServer) => {
   return {
     fetch: async (request: Request, env?: any) => {
+      console.log(request.url);
       if (request.method !== "GET" && request.method !== "POST") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+      if (request.method === "GET") {
         return new Response("Method not allowed", { status: 405 });
       }
 
       const sessionId = request.headers.get("Mcp-Session-Id") || crypto.randomUUID();
-      const userId = request.headers.get("Mcp-User-Id") || crypto.randomUUID();
       const body = (await request.json()) as RPCRequest | RPCRequest[];
       const isBatchRequest = isBatch(body);
       let requests = isBatchRequest ? body : ([body] as RPCRequest[]);
 
       const ctx = await server.createCtx?.({
         env,
-        sessionId,
-        userId
+        sessionId
       });
 
-      const handler = new MCPHandler(server, sessionId, userId, env, ctx);
+      const handler = new MCPHandler(server, sessionId, env, ctx);
       const results = await Promise.all(
         requests.map(async (request) => {
           const { method, params, id } = request;
@@ -90,8 +92,7 @@ export const createMCP = (server: MCPServer) => {
       return new Response(JSON.stringify(isBatchRequest ? results : results[0]), {
         headers: {
           "Content-Type": "application/json",
-          "Mcp-Session-Id": sessionId,
-          "Mcp-User-Id": userId
+          "Mcp-Session-Id": sessionId
         }
       });
     },

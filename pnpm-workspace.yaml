@@ -3,3 +3,4 @@ packages:
   - "doc"
   - "tests"
   - "examples/*"
+  - "test-server"

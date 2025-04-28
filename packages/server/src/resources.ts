@@ -4,7 +4,7 @@ import { MCPError, mcpError } from "./mcp/errors";
 export type ResourcePayload = WithCtxAndEnv<{
   uri: string;
   sessionId: string;
-  userId: string;
+
   error: typeof error;
 }>;
 
@@ -39,10 +39,10 @@ export class Resource<H extends HandleResourceFunction> {
   "~call" = async (
     uri: string,
     sessionId: string,
-    userId: string,
+
     ctx?: CTX
   ): Promise<[string, "text" | "blob"] | [MCPError, "error"]> => {
-    const result = await this["~handler"]({ uri, sessionId, userId, error, ctx } as ResourcePayload);
+    const result = await this["~handler"]({ uri, sessionId, error, ctx } as ResourcePayload);
 
     if (typeof result === "string") {
       return [result, "text"] as const;

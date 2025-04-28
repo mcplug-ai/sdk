@@ -30,7 +30,7 @@ export type WithEnv<T> = ENV extends undefined ? T : T & { env: ENV };
 
 export type WithCtxAndEnv<T> = WithCtx<WithEnv<T>>;
 
-export type CreateCtx = (payload: { env: ENV; userId?: string; sessionId?: string }) => MaybePromise<any>;
+export type CreateCtx = (payload: { env: ENV; sessionId?: string }) => MaybePromise<any>;
 
 export type MCPServer = {
   createCtx?: CreateCtx;

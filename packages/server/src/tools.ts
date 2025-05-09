@@ -10,7 +10,6 @@ import { toDataUrl } from "./resources";
 export type ToolPayload<Schema extends StandardSchemaV1 | undefined> = WithCtxAndEnv<{
   input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : never;
   sessionId: string;
-
   error: typeof error;
   blob: typeof blob;
 }>;
@@ -35,7 +34,6 @@ export class Tool<
   "~call" = async (
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
     sessionId?: string,
-
     ctx?: CTX,
     env?: ENV
   ) => {
@@ -78,9 +76,9 @@ export class Tool<
 
   "~validate" = async (input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined) => {
     if (!this["~schema"]) {
-      return true;
+      return undefined;
     }
-    return await validateInput(this["~schema"], input);
+    return validateInput(this["~schema"], input);
   };
 
   input = <SS extends StandardSchemaV1>(standardStandardSchemaV1: SS) => {

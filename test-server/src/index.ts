@@ -1,12 +1,5 @@
-import { tool, prompt, resource, type CreateCtx } from "@mcplug/server";
+import { tool, prompt, resource } from "@mcplug/server";
 import { z } from "zod";
-
-// Context will be available in the handle functions. If you do not need it, you can remove it or comment it out.
-export const createCtx = (({ env, sessionId }) => {
-  return {
-    hello: "world"
-  };
-}) satisfies CreateCtx;
 
 export default {
   tools: {
@@ -25,7 +18,6 @@ export default {
         })
       )
       .handle(async ({ input }) => {
-        console.log(input);
         return {
           city: input.city,
           temperature: 20,
@@ -35,7 +27,7 @@ export default {
       })
   },
   prompts: {
-    "get-weather": prompt("Use this tool to get the weather in a given city")
+    "get-get": prompt("Use this prompt get a starter question")
       .input(
         z.object({
           city: z.string()
@@ -43,7 +35,8 @@ export default {
       )
       .handle(async ({ input }) => {
         return {
-          text: `The weather in ${input.city} is sunny with a temperature of 20C`
+          role: "user",
+          text: `What is the weather in ${input.city}`
         };
       })
   },

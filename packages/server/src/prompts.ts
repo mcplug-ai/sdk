@@ -31,7 +31,6 @@ export class Prompt<Schema extends StandardSchemaV1 | undefined, H extends Handl
   "~call" = (
     input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined,
     sessionId: string,
-
     ctx?: CTX
   ) => {
     return this["~handler"]({ input, sessionId, error, ctx } as PromptPayload<Schema>);
@@ -39,9 +38,9 @@ export class Prompt<Schema extends StandardSchemaV1 | undefined, H extends Handl
 
   "~validate" = async (input: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : undefined) => {
     if (!this["~schema"]) {
-      return true;
+      return undefined;
     }
-    return await validateInput(this["~schema"], input);
+    return validateInput(this["~schema"], input);
   };
 
   input = <SS extends StandardSchemaV1>(standardStandardSchemaV1: SS) => {

@@ -28,7 +28,10 @@ import {
   UnsubscribeRequest,
   RequestId,
   PaginatedResult,
-  Tool as SpecTool
+  Tool as SpecTool,
+  ListResourceTemplatesRequest,
+  ListResourceTemplatesResult,
+  InitializedNotification
 } from "./spec";
 
 export interface ListToolsOutputResult extends PaginatedResult {
@@ -39,6 +42,9 @@ export interface ListToolsOutputResult extends PaginatedResult {
 
 type MCPHandlerInterface = {
   initialize: (payload: InitializeRequest["params"]) => MaybePromise<InitializeResult | MCPError>;
+  notifications: {
+    initialized: (payload: InitializedNotification["params"]) => MaybePromise<EmptyResult | MCPError>;
+  };
   prompts: {
     get: (payload: GetPromptRequest["params"]) => MaybePromise<GetPromptResult | MCPError>;
     list: (payload: ListPromptsRequest["params"]) => MaybePromise<ListPromptsResult | MCPError>;
@@ -54,6 +60,9 @@ type MCPHandlerInterface = {
     read: (payload: ReadResourceRequest["params"]) => MaybePromise<ReadResourceResult | MCPError>;
     subscribe?: (payload: SubscribeRequest["params"]) => MaybePromise<EmptyResult | MCPError>;
     unsubscribe?: (payload: UnsubscribeRequest["params"]) => MaybePromise<EmptyResult | MCPError>;
+    templates: {
+      list: (payload: ListResourceTemplatesRequest["params"]) => MaybePromise<ListResourceTemplatesResult | MCPError>;
+    };
   };
   tools: {
     call: (payload: CallToolRequest["params"]) => MaybePromise<CallToolResult | MCPError>;
@@ -107,7 +116,7 @@ export class MCPHandler {
 
   public get mpcHandler(): MCPHandlerInterface {
     return {
-      initialize: async () => {
+      initialize: async (request) => {
         const result: InitializeResult = {
           serverInfo: {
             name: this.server.name,
@@ -137,6 +146,11 @@ export class MCPHandler {
         }
         return result;
       },
+      notifications: {
+        initialized: async () => {
+          return {} satisfies EmptyResult;
+        }
+      },
       prompts: {
         get: async (payload) => {
           if (!this.hasPrompts) {
@@ -149,10 +163,9 @@ export class MCPHandler {
             return mcpError("METHOD_NOT_FOUND");
           }
 
-          if (!(await prompt["~validate"](payload.arguments))) {
-            return mcpError("INVALID_PARAMS");
-          }
-          const result = await prompt["~call"](payload.arguments, this.sessionId, this.ctx);
+          const validatedPayload = await prompt["~validate"](payload.arguments);
+
+          const result = await prompt["~call"](validatedPayload, this.sessionId, this.ctx);
           if (result instanceof MCPError) {
             return result;
           }
@@ -188,14 +201,25 @@ export class MCPHandler {
             resources: defineResources(this.server.resources || {})
           } satisfies ListResourcesResult;
         },
+        templates: {
+          list: async (payload) => {
+            if (!this.hasResources) {
+              return mcpError("METHOD_NOT_FOUND");
+            }
+
+            return {
+              resourceTemplates: []
+            } satisfies ListResourceTemplatesResult;
+          }
+        },
         read: async (payload) => {
           if (!this.hasResources) {
             return mcpError("METHOD_NOT_FOUND");
           }
 
-          const resource = Object.values(this.server.resources || {}).find(
-            (resource) => resource["~uri"] === payload.uri
-          );
+          const resource =
+            Object.values(this.server.resources || {}).find((resource) => resource["~uri"] === payload.uri) ||
+            this.server.resources?.[payload.uri];
 
           if (!resource) {
             return mcpError("RESOURCE_NOT_FOUND");
@@ -238,11 +262,9 @@ export class MCPHandler {
             return mcpError("METHOD_NOT_FOUND");
           }
 
-          if (!(await tool["~validate"](payload.arguments))) {
-            return mcpError("INVALID_PARAMS");
-          }
+          const validatedPayload = await tool["~validate"](payload.arguments);
 
-          const result = await tool["~call"](payload.arguments, this.sessionId, this.ctx, this.env);
+          const result = await tool["~call"](validatedPayload, this.sessionId, this.ctx, this.env);
 
           if (result instanceof MCPError) {
             return result;

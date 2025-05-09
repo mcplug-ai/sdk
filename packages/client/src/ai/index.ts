@@ -82,7 +82,6 @@ class McpPlug<TOOLSET extends ToolSet> {
   };
 
   private executeTool = (toolName: string, constants?: Record<string, string>) => async (args: any) => {
-    console.log({ constants });
     const data = await this.rpc("tools/call", {
       name: toolName,
       arguments: { ...args, ...constants }
@@ -101,7 +100,6 @@ class McpPlug<TOOLSET extends ToolSet> {
       return part;
     });
 
-    console.log(results);
     if (results.length === 0) {
       return null;
     }

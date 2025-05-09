@@ -202,7 +202,6 @@ if (isDev) {
     process.exit(1);
   });
 }
-//
-//
+
 export default RemoteMCPlugClient;
 export { RemoteMCPlugClient, LocalMCPlugClient };

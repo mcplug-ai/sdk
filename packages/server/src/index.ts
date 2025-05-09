@@ -14,7 +14,6 @@ export { type Register, type CreateCtx } from "./types";
 export const createMCP = (server: MCPServer) => {
   return {
     fetch: async (request: Request, env?: any) => {
-      console.log(request.url);
       if (request.method !== "GET" && request.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
       }

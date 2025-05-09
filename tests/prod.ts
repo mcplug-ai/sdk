@@ -6,25 +6,25 @@ const tools = await mcplug<MCPLUG_Caca>({
   token,
   id,
   constants: {
-    EXA_API_KEY: "3f40c3c7-42eb-4293-850f-5b4d833a376b"
+    EXA_API_KEY: "ffc86110-1a1d-4aad-9bc3-aa0ccb85169a"
   }
 });
 //
-// console.log(tools);
+console.log(tools);
 
-import { generateText } from "ai";
-import { createGroq } from "@ai-sdk/groq";
+// import { generateText } from "ai";
+// import { createGroq } from "@ai-sdk/groq";
 
-const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY
-});
+// const groq = createGroq({
+//   apiKey: process.env.GROQ_API_KEY
+// });
 
-const result = await generateText({
-  model: groq("meta-llama/llama-4-maverick-17b-128e-instruct"),
-  messages: [{ role: "user", content: "Do a simple search on the web for the latest news about mcp servers" }],
-  tools,
-  maxSteps: 10
-});
+// const result = await generateText({
+//   model: groq("meta-llama/llama-4-maverick-17b-128e-instruct"),
+//   messages: [{ role: "user", content: "Do a simple search on the web for the latest news about mcp servers" }],
+//   tools,
+//   maxSteps: 10
+// });
 
 // console.log(result);
 
@@ -41,4 +41,11 @@ const result = await generateText({
 //   }
 // });
 
-console.log(result.text);
+// console.log(result.text);
+
+const result = await tools.web_search_tool.execute({
+  query: "Do a simple search on the web for the latest news about mcp servers",
+  numResults: 10
+});
+
+console.log(result);

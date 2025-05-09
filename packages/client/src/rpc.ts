@@ -76,11 +76,13 @@ export const rpc =
       "x-mcplug-client": "mcplug",
       "x-mcplug-id": id
     };
+
     if (sessionId) {
       Object.assign(headers, {
         "mcp-session-id": sessionId
       });
     }
+
     const response = await _fetch(`https://proxy.mcplug.ai`, {
       method: "POST",
       body: JSON.stringify({
@@ -93,6 +95,5 @@ export const rpc =
     });
 
     const result = await response.json();
-    console.log(result);
     return result;
   };

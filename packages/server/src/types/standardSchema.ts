@@ -68,7 +68,7 @@ export declare namespace StandardSchemaV1 {
 export async function validateInput(schema: StandardSchemaV1, data: unknown): Promise<any | MCPError> {
   const result = await schema["~standard"].validate(data);
   if (result.issues) {
-    return false;
+    throw mcpError("INVALID_PARAMS");
   }
   return result.value;
 }

@@ -1,4 +1,4 @@
 .env
 utils.test.ts
-./prod.ts
+./tests/prod.ts
 local.ts

@@ -102,6 +102,7 @@ export const METHOD_NOT_FOUND = -32601;
 export const INVALID_PARAMS = -32602;
 export const INTERNAL_ERROR = -32603;
 export const RESOURCE_NOT_FOUND = -32604;
+
 /**
  * A response to a request that indicates an error occurred.
  */
@@ -473,6 +474,13 @@ export interface Resource {
    * Optional annotations for the client.
    */
   annotations?: Annotations;
+
+  /**
+   * The size of the raw resource content, in bytes (i.e., before base64 encoding or any tokenization), if known.
+   *
+   * This can be used by Hosts to display file sizes and estimate context window usage.
+   */
+  size?: number;
 }
 
 /**
@@ -1202,6 +1210,7 @@ export type ClientRequest =
   | GetPromptRequest
   | ListPromptsRequest
   | ListResourcesRequest
+  | ListResourceTemplatesRequest
   | ReadResourceRequest
   | SubscribeRequest
   | UnsubscribeRequest
@@ -1234,6 +1243,7 @@ export type ServerResult =
   | CompleteResult
   | GetPromptResult
   | ListPromptsResult
+  | ListResourceTemplatesResult
   | ListResourcesResult
   | ReadResourceResult
   | CallToolResult

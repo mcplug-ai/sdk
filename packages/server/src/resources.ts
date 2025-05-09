@@ -92,7 +92,7 @@ export const defineResources = (resources: Record<string, Resource<any>>, addCos
 export const defineResource = (name: string, resource: Resource<any>, addCost: boolean = true) => {
   const definition = {
     name,
-    uri: resource["~uri"],
+    uri: resource["~uri"] || name,
     description: resource["~description"],
     mimeType: resource["~type"]
   };
